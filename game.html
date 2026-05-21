@@ -1,0 +1,2411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shark Equation — Math Game</title>
+<meta name="description" content="Guide a shark through the ocean by plotting the right equation. Learn linear, quadratic, power and exponential functions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN TOKENS ── */
+:root {
+  --bg:          #05080f;
+  --panel:       #07101e;
+  --surface:     #0c1828;
+  --surface-hi:  #112236;
+  --border:      #1a2e48;
+  --border-glow: #FFD70030;
+  --gold:        #FFD700;
+  --gold-dim:    #FFD70070;
+  --gold-glow:   #FFD70025;
+  --cyan:        #38bdf8;
+  --cyan-dim:    #38bdf840;
+  --text:        #dbeafe;
+  --text-dim:    #5a7fa8;
+  --red:         #f43f5e;
+  --red-dim:     #f43f5e25;
+  --radius:      10px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito Sans', sans-serif;
+  display: flex;
+  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── LEFT PANEL ── */
+#left-panel {
+  width: 326px;
+  min-width: 326px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px 14px;
+  position: relative;
+  overflow-y: auto;
+  gap: 7px;
+}
+
+/* Grain texture overlay */
+#left-panel::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  width: 326px;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+}
+
+/* Top accent line */
+#left-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.5;
+}
+
+/* ── HEADER ── */
+.panel-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 20px; font-weight: 900;
+  letter-spacing: -0.2px; color: var(--gold);
+  text-shadow: 0 0 20px #FFD70045;
+  display: flex; align-items: center; gap: 7px;
+}
+.back-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-bottom: 10px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  background: none; border: none; padding: 0;
+  cursor: pointer; text-decoration: none;
+  opacity: 0.55;
+  transition: opacity 0.18s ease, color 0.18s ease;
+}
+.back-btn:hover { opacity: 1; color: var(--gold); }
+.rule {
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold-dim), transparent);
+  border-radius: 1px;
+  margin: 0;
+}
+.sys-tag { display: none; }
+.subtitle { display: none; }
+.sec-label { display: none; }
+
+/* ── EQUATION INPUT ── */
+#eq-wrap {
+  position: relative;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  min-height: 66px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  cursor: text;
+}
+#eq-wrap.focused {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-glow), inset 0 0 12px #FFD70006;
+}
+#eq-wrap.error {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px var(--red-dim);
+}
+
+#eq-input {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0; cursor: text;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px; font-weight: 600;
+  color: var(--text);
+  background: transparent; border: none; outline: none; resize: none;
+  /* push text past the "y = " prefix so it aligns with render-body */
+  padding: 14px 16px 14px 68px;
+  line-height: 1.4;
+  caret-color: var(--gold);
+}
+/* focused: reveal raw textarea, hide pretty render body */
+#eq-wrap.focused #eq-input       { opacity: 1; }
+#eq-wrap.focused #eq-render-body { visibility: hidden; }
+
+#eq-render {
+  padding: 14px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px; font-weight: 600;
+  color: var(--text);
+  min-height: 66px; line-height: 1.4;
+  display: flex; align-items: center; gap: 6px;
+  pointer-events: none; position: relative; z-index: 1;
+}
+#eq-render .eq-prefix-r {
+  color: var(--gold-dim); flex-shrink: 0;
+  font-weight: 700;
+}
+#eq-render sup { font-size: 0.58em; vertical-align: super; line-height: 0; }
+#eq-render.error-text #eq-render-body { color: var(--red); }
+
+/* blinking cursor when editing */
+#eq-wrap.focused #eq-render-body::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 0.85em;
+  background: var(--gold);
+  margin-left: 3px;
+  vertical-align: middle;
+  border-radius: 1px;
+  animation: eq-blink 1s step-end infinite;
+}
+@keyframes eq-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+#eq-status {
+  font-size: 12px; font-weight: 700; color: transparent;
+  min-height: 0; transition: color 0.2s;
+}
+#eq-status.error {
+  color: var(--red);
+  background: var(--red-dim);
+  border: 1px solid #f43f5e40;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+/* ── SUPERSCRIPT BUTTONS ── */
+#superscript-btns {
+  display: flex; gap: 4px; flex-wrap: wrap;
+}
+.sup-btn {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 7px; padding: 6px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 600;
+  color: var(--text-dim); cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.08s;
+  white-space: nowrap; user-select: none;
+}
+.sup-btn:hover {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+  background: var(--gold-glow);
+}
+.sup-btn:active { transform: scale(0.91) translateY(1px); }
+
+/* ── WORLD TABS — segmented control ── */
+#world-tabs {
+  display: flex; gap: 0;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+}
+.world-tab {
+  flex: 1; min-width: 0;
+  background: transparent;
+  border: none;
+  border-radius: 7px; padding: 7px 2px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px; font-weight: 800;
+  color: var(--text-dim); cursor: pointer;
+  text-align: center;
+  transition: background 0.18s ease, color 0.18s ease;
+  white-space: nowrap; line-height: 1.25;
+}
+.world-tab:hover:not(.active) {
+  color: var(--text);
+  background: var(--surface-hi);
+}
+.world-tab.active {
+  background: var(--gold-glow);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px #FFD70038;
+}
+
+/* ── LEVEL INFO ── */
+#level-bar {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 11px 13px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+#level-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 16px; font-weight: 900;
+  color: var(--gold);
+  letter-spacing: 1px;
+  text-shadow: 0 0 14px #FFD70035;
+}
+#level-desc {
+  font-size: 13px; font-weight: 600;
+  color: var(--text); line-height: 1.55;
+  opacity: 0.78;
+  text-wrap: pretty;
+}
+#level-hint {
+  font-size: 13px; color: var(--cyan);
+  margin-top: 4px; font-style: normal;
+  line-height: 1.6; display: none;
+  padding: 10px 12px;
+  background: var(--cyan-dim);
+  border-radius: 8px;
+  border-left: 2px solid var(--cyan);
+  letter-spacing: 0.1px;
+}
+#level-hint.show { display: block; }
+
+#hint-btn {
+  margin-top: 6px; padding: 7px 14px;
+  background: var(--cyan-dim);
+  border: 1.5px solid #38bdf830;
+  border-radius: 7px; color: var(--cyan);
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s;
+  align-self: flex-start;
+  letter-spacing: 0.3px;
+}
+#hint-btn:hover {
+  border-color: var(--cyan);
+  background: #38bdf820;
+  box-shadow: 0 0 12px #38bdf825;
+}
+
+/* Stars */
+#stars-row { display: flex; gap: 5px; margin-top: 2px; }
+.star-pip { width: 14px; height: 14px; }
+
+/* ── PRESETS ── */
+.rule-sm {
+  height: 1px;
+  background: var(--border);
+  margin: 0;
+}
+#presets-label {
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px; font-weight: 800;
+  color: var(--text-dim); letter-spacing: 2px;
+  text-transform: uppercase; padding: 0 2px;
+}
+
+/* ── TANGENT TOOL ── */
+#tangent-section { display: flex; flex-direction: column; gap: 4px; }
+#tangent-btn {
+  width: 100%; padding: 9px 13px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 8px; color: var(--text-dim);
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px; font-weight: 800;
+  cursor: pointer; transition: all 0.15s;
+  text-align: left; letter-spacing: 0.3px;
+  display: flex; align-items: center; gap: 6px;
+}
+#tangent-btn:hover {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+  background: var(--gold-glow);
+}
+#tangent-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--gold-glow);
+  box-shadow: 0 0 12px var(--border-glow);
+}
+#tangent-info {
+  font-size: 12px; font-weight: 700;
+  color: var(--text-dim);
+  min-height: 16px; padding: 4px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--surface);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  display: none;
+}
+#tangent-info.show { display: block; color: var(--gold); border-color: #FFD70030; }
+
+/* ── NEXT LEVEL BUTTON ── */
+#next-btn {
+  display: none; width: 100%;
+  background: linear-gradient(160deg, #FFD70020, #FFD70008);
+  border: 1.5px solid #FFD70060;
+  color: var(--gold);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px; font-weight: 900;
+  letter-spacing: 2px; padding: 12px;
+  cursor: pointer; border-radius: var(--radius);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  text-transform: uppercase;
+}
+#next-btn:hover {
+  background: linear-gradient(160deg, #FFD70038, #FFD70015);
+  box-shadow: 0 0 20px #FFD70025, 0 4px 16px #00000050;
+  transform: translateY(-1px);
+}
+#next-btn:active { transform: translateY(1px) scale(0.98); }
+#next-btn.visible { display: block; }
+
+/* Hide telemetry and log */
+#telem { display: none; }
+#log-wrap { display: none; }
+.log-line { display: none; }
+
+/* ── RIGHT PANEL ── */
+#right-panel {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #061525;
+}
+
+#game { display: block; width: 100%; height: 100%; }
+
+/* Launch prompt */
+#launch-prompt {
+  position: absolute; bottom: 44px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(5,8,15,0.75);
+  border: 1px solid var(--border);
+  border-radius: 20px; padding: 7px 20px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px; letter-spacing: 2.5px; font-weight: 700;
+  color: var(--text-dim);
+  pointer-events: none; white-space: nowrap;
+  transition: opacity 0.3s;
+  backdrop-filter: blur(6px);
+}
+#launch-prompt.hide { opacity: 0; }
+
+/* Level banner */
+#level-banner {
+  position: absolute; top: 14px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(5,8,15,0.82);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 7px 22px;
+  text-align: center; pointer-events: none;
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+}
+#banner-world {
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px; letter-spacing: 2.5px;
+  font-weight: 800; color: var(--text-dim);
+  text-transform: uppercase; white-space: nowrap;
+}
+#banner-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px; font-weight: 900;
+  letter-spacing: 2.5px; color: var(--gold);
+  text-shadow: 0 0 16px #FFD70060;
+  white-space: nowrap;
+}
+
+/* Win flash */
+#win-flash {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none; opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.16,1,0.3,1);
+  background: radial-gradient(ellipse at center, rgba(255,215,0,0.12) 0%, rgba(255,215,0,0.03) 45%, transparent 70%);
+}
+#win-flash.show { opacity: 1; }
+.win-text {
+  font-family: 'Nunito', sans-serif;
+  font-size: 30px; font-weight: 900; letter-spacing: 6px;
+  color: var(--gold);
+  text-shadow: 0 0 30px #FFD700cc, 0 0 60px #FFD70080, 0 2px 0 #a07000;
+  transform: translateY(0);
+}
+.win-sub {
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px; letter-spacing: 4px; font-weight: 800;
+  color: var(--text-dim); margin-top: 12px;
+  text-transform: uppercase;
+}
+
+/* Error flash */
+#err-flash {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  transition: opacity 0.15s; background: rgba(244,63,94,0.06);
+}
+#err-flash.show { opacity: 1; }
+
+/* World error overlay */
+#world-error {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none; opacity: 0; transition: opacity 0.3s;
+  background: rgba(5,8,15,0.9);
+  backdrop-filter: blur(8px); z-index: 20;
+}
+#world-error.show { opacity: 1; }
+#world-error-icon { font-size: 52px; margin-bottom: 16px; line-height: 1; }
+#world-error-title {
+  font-family: 'Nunito', sans-serif; font-size: 28px; font-weight: 900;
+  color: var(--red); text-align: center; letter-spacing: 1.5px;
+  text-shadow: 0 0 30px #f43f5e60;
+}
+#world-error-type {
+  font-family: 'Nunito Sans', sans-serif; font-size: 15px; font-weight: 600;
+  color: #fbbf24; text-align: center; margin-top: 10px; max-width: 320px;
+  line-height: 1.5;
+}
+#world-error-sub {
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px; font-weight: 700; color: var(--text-dim);
+  text-align: center; margin-top: 18px; max-width: 300px;
+  line-height: 1.6;
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 16px;
+  background: var(--surface);
+}
+
+/* ── BONUS QUESTION PANEL ── */
+#bonus-panel {
+  display: none;
+  background: #0c1d2e;
+  border: 1.5px solid #c8a800;
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  margin-top: 8px;
+  animation: fadeUp 0.35s ease forwards;
+}
+#bonus-panel.show { display: block; }
+.bonus-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.bonus-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--gold);
+}
+.bonus-pts {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  color: #4ade80; letter-spacing: 1px;
+}
+#bonus-q {
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 13px; font-weight: 700;
+  color: var(--text); line-height: 1.5;
+  margin-bottom: 12px;
+}
+#bonus-choices {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.bonus-choice {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 700;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 6px;
+  color: var(--text);
+  cursor: pointer; text-align: center;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.bonus-choice:hover:not(.answered) {
+  background: #162840; border-color: #c8a80066;
+}
+.bonus-choice:active:not(.answered) { transform: scale(0.97); }
+.bonus-choice.correct {
+  background: #0b2e1a; border-color: #4ade80; color: #4ade80;
+}
+.bonus-choice.wrong {
+  background: #2a0c14; border-color: #f43f5e; color: #f43f5e;
+}
+.bonus-choice.reveal {
+  background: #0b2e1a66; border-color: #4ade8055; color: #4ade8099;
+}
+.bonus-choice.answered { cursor: default; }
+#bonus-result {
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 12px; font-weight: 600;
+  color: var(--text-dim); line-height: 1.55;
+  margin-top: 10px; display: none;
+}
+#bonus-result.show { display: block; }
+#bonus-result .result-line {
+  font-weight: 800; font-size: 13px;
+  margin-bottom: 4px;
+}
+#bonus-result .result-line.ok  { color: #4ade80; }
+#bonus-result .result-line.bad { color: #f43f5e; }
+
+/* ── ONBOARDING INSTRUCTION FLOW ── */
+#onboard-overlay {
+  position: fixed; inset: 0;
+  z-index: 400;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+#onboard-overlay.visible { opacity: 1; }
+#onboard-overlay.fading  { opacity: 0; }
+
+/* Pulsing red highlight box around eq-wrap */
+#onboard-ring {
+  position: fixed;
+  border: 2px solid var(--red);
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 4px rgba(244,63,94,0.12),
+    0 0 24px rgba(244,63,94,0.3);
+  pointer-events: none;
+  animation: onboard-pulse 1.6s ease-in-out infinite;
+}
+@keyframes onboard-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(244,63,94,0.12), 0 0 24px rgba(244,63,94,0.3);
+    border-color: var(--red);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(244,63,94,0.04), 0 0 40px rgba(244,63,94,0.45);
+    border-color: #ff6b85;
+  }
+}
+
+/* Tooltip above the ring */
+#onboard-tip {
+  position: fixed;
+  background: rgba(5,8,15,0.96);
+  border: 1px solid var(--red);
+  border-radius: 10px;
+  padding: 10px 16px 12px;
+  pointer-events: none;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(244,63,94,0.2);
+  backdrop-filter: blur(8px);
+  transform: translateX(-50%);
+  animation: onboard-float 2s ease-in-out infinite;
+}
+@keyframes onboard-float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(-4px); }
+}
+#onboard-tip-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 4px;
+}
+#onboard-tip-text {
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px; font-weight: 800;
+  color: var(--text);
+  line-height: 1.4;
+}
+/* Animated chevron below tooltip */
+#onboard-chevron {
+  display: block;
+  margin: 8px auto 0;
+  width: 18px; height: 18px;
+  animation: onboard-chevron-bob 1.2s ease-in-out infinite;
+}
+@keyframes onboard-chevron-bob {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(5px); }
+}
+
+/* Dismiss hint at bottom */
+#onboard-dismiss {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(90,127,168,0.5);
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING OVERLAY -->
+<div id="onboard-overlay">
+  <div id="onboard-ring"></div>
+  <div id="onboard-tip">
+    <div id="onboard-tip-label">Start here</div>
+    <div id="onboard-tip-text">Type an equation<br>to guide the shark</div>
+    <svg id="onboard-chevron" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 6.5 L9 11.5 L14 6.5" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div id="onboard-dismiss">Click the box to start</div>
+</div>
+
+<!-- LEFT PANEL -->
+<div id="left-panel">
+  <a class="back-btn" href="/">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    All games
+  </a>
+
+  <div class="panel-title">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;opacity:0.9" aria-hidden="true">
+      <path d="M2 12C2 12 4 5 12 5C18 5 22 9 22 12C22 14 20 16 18 17L20 20H15L13 17C12.3 17.1 11.7 17.1 11 17L9 20H4L6 17C4 16 2 14 2 12Z" fill="#FFD700" opacity="0.85"/>
+      <circle cx="16" cy="11" r="1.2" fill="#04080f"/>
+    </svg>
+    Shark Equation
+  </div>
+
+  <div class="rule"></div>
+
+  <div id="progress-row" style="display:flex;align-items:center;gap:8px;">
+    <div id="progress-track" style="flex:1;height:4px;background:var(--surface);border-radius:4px;overflow:hidden;">
+      <div id="progress-fill" style="height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));border-radius:4px;width:0%;transition:width 0.5s ease;"></div>
+    </div>
+    <div id="progress-label" style="font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;color:var(--text-dim);letter-spacing:0.5px;white-space:nowrap;">1 / 21</div>
+  </div>
+
+  <div id="eq-wrap">
+    <div id="eq-render"><span class="eq-prefix-r">y =</span><span id="eq-render-body"></span></div>
+    <textarea id="eq-input" spellcheck="false" autocomplete="off" autocorrect="off"></textarea>
+  </div>
+  <div id="superscript-btns">
+    <button class="sup-btn" onclick="insertAtCursor('^2')">x²</button>
+    <button class="sup-btn" onclick="insertAtCursor('^3')">x³</button>
+    <button class="sup-btn" onclick="insertAtCursor('^')">xⁿ</button>
+    <button class="sup-btn" onclick="insertAtCursor('(')">(</button>
+    <button class="sup-btn" onclick="insertAtCursor(')')">)</button>
+  </div>
+  <div id="eq-status"></div>
+
+  <div id="world-tabs">
+    <div class="world-tab active" onclick="jumpToWorld(0)">W1<br><span style="font-size:9px;font-weight:600;opacity:0.7">Linear</span></div>
+    <div class="world-tab" onclick="jumpToWorld(1)">W2<br><span style="font-size:9px;font-weight:600;opacity:0.7">Quadratic</span></div>
+    <div class="world-tab" onclick="jumpToWorld(2)">W3<br><span style="font-size:9px;font-weight:600;opacity:0.7">Factored</span></div>
+    <div class="world-tab" onclick="jumpToWorld(3)">W4<br><span style="font-size:9px;font-weight:600;opacity:0.7">Mixed</span></div>
+    <div class="world-tab" onclick="jumpToWorld(4)">W5<br><span style="font-size:9px;font-weight:600;opacity:0.7">Exp</span></div>
+  </div>
+
+  <div id="level-bar">
+    <div id="level-title">WORLD 1-1</div>
+    <div id="level-desc">Loading...</div>
+    <div id="level-hint"></div>
+    <div id="stars-row"></div>
+    <button id="hint-btn" onclick="toggleHint()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-1px" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      Show Hint
+    </button>
+  </div>
+
+  <div id="tangent-section">
+    <button id="tangent-btn" onclick="toggleTangentMode()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-1px" aria-hidden="true"><path d="M3 21L21 3M3 21l6-2M3 21l2-6"/></svg>
+      Draw tangent
+    </button>
+    <div id="tangent-info"></div>
+  </div>
+
+  <div id="bonus-panel">
+    <div class="bonus-header">
+      <span class="bonus-label">Quick Question</span>
+      <span class="bonus-pts">+1 point</span>
+    </div>
+    <p id="bonus-q"></p>
+    <div id="bonus-choices"></div>
+    <div id="bonus-result"></div>
+  </div>
+
+  <button id="next-btn" onclick="nextLevel()">Next Level →</button>
+</div>
+
+<!-- RIGHT PANEL -->
+<div id="right-panel">
+  <canvas id="game"></canvas>
+
+  <div id="level-banner">
+    <div id="banner-world">WORLD 1-1</div>
+    <div id="banner-title">FIRST LAUNCH</div>
+  </div>
+
+  <div id="launch-prompt">Tweak your equation and the shark goes again</div>
+
+  <div id="win-flash">
+    <div class="win-text">YOU NAILED IT</div>
+    <div class="win-sub" id="win-sub">All hoops cleared</div>
+  </div>
+
+  <div id="err-flash"></div>
+
+  <div id="world-error">
+    <div id="world-error-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    </div>
+    <div id="world-error-title"></div>
+    <div id="world-error-type"></div>
+    <div id="world-error-sub">Fix your equation on the left to keep going</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+// ═══════════════════════════════════════
+// LEVELS
+// ═══════════════════════════════════════
+const LEVELS = [
+  // ── WORLD 1: LINEAR FUNCTIONS ──────────────────────────────
+  {
+    world: 'WORLD 1-1', title: 'POSITIVE GRADIENT',
+    desc: 'Straight line rising to the right: y = ax + b',
+    hint: 'Bait at (4, 6). With gradient 1: 4 + b = 6 → b = 2. Try y = x + 2.',
+    startEq: 'x',
+    stars: [{ x: 4, y: 6 }],
+    presets: ['x', 'x + 1', 'x + 2'],
+    bonusQ: {
+      q: 'What is the gradient of y = x + 2?',
+      choices: ['−2', '0', '1', '2'],
+      answer: '1',
+      explain: 'In y = mx + b, gradient m is the coefficient of x. No number in front of x means m = 1.',
+    },
+  },
+  {
+    world: 'WORLD 1-2', title: 'NEGATIVE GRADIENT',
+    desc: 'A line with a negative slope falls as x increases',
+    hint: 'Bait at (6, 4). Gradient = −1: −6 + b = 4 → b = 10. Try y = −x + 10.',
+    startEq: '-x + 8',
+    stars: [{ x: 6, y: 4 }],
+    presets: ['-x + 8', '-x + 9', '-x + 10'],
+    bonusQ: {
+      q: 'Does the point (3, 7) lie on the line y = −x + 10?',
+      choices: ['Yes', 'No'],
+      answer: 'Yes',
+      explain: 'Substitute x = 3 into y = −x + 10: y = −3 + 10 = 7. That matches, so (3, 7) is on the line.',
+    },
+  },
+  {
+    world: 'WORLD 1-3', title: 'RISE OVER RUN',
+    desc: 'Gradient = (y₂ − y₁) ÷ (x₂ − x₁)',
+    hint: 'Bait at (4, 9), line starts at (0, 1). Gradient = (9−1)÷(4−0) = 2. So y = 2x + 1.',
+    startEq: 'x + 1',
+    stars: [{ x: 4, y: 9 }],
+    presets: ['x + 1', '1.5x + 1', '2x + 1'],
+    bonusQ: {
+      q: 'The line passes through (0, 1) and (4, 9). What is the gradient?',
+      choices: ['0.5', '1', '2', '4'],
+      answer: '2',
+      explain: 'Gradient = rise ÷ run = (9 − 1) ÷ (4 − 0) = 8 ÷ 4 = 2.',
+    },
+  },
+  {
+    world: 'WORLD 1-4', title: 'Y-INTERCEPT',
+    desc: 'b in y = ax + b sets where the line crosses the y-axis',
+    hint: 'Both hoops lie on y = x + 2. At x=3: 5 ✓. At x=9: 11 ✓.',
+    startEq: 'x',
+    stars: [{ x: 3, y: 5 }, { x: 9, y: 11 }],
+    presets: ['x', 'x + 1', 'x + 2'],
+    bonusQ: {
+      q: 'Where does y = x + 2 cross the y-axis?',
+      choices: ['(0, −2)', '(0, 1)', '(0, 2)', '(2, 0)'],
+      answer: '(0, 2)',
+      explain: 'The y-intercept is b in y = mx + b. Set x = 0: y = 0 + 2 = 2, so the line crosses at (0, 2).',
+    },
+  },
+  {
+    world: 'WORLD 1-5', title: 'CROSSING ZERO',
+    desc: 'A negative gradient line eventually dips below y = 0',
+    hint: 'Bait at (8, −2). Try y = −0.5x + 2. At x=8: −4+2=−2. ✓',
+    startEq: '-0.5x + 4',
+    stars: [{ x: 8, y: -2 }],
+    presets: ['-0.5x + 4', '-0.5x + 3', '-0.5x + 2'],
+    bonusQ: {
+      q: 'Where does y = −0.5x + 2 cross the x-axis?',
+      choices: ['x = 2', 'x = 4', 'x = 8', 'x = −2'],
+      answer: 'x = 4',
+      explain: 'Set y = 0: 0 = −0.5x + 2 → 0.5x = 2 → x = 4. The line crosses the x-axis at x = 4.',
+    },
+  },
+
+  // ── WORLD 2: QUADRATIC — VERTEX FORM ──────────────────────
+  {
+    world: 'WORLD 2-1', title: 'MAXIMUM POINT',
+    desc: 'y = −(x−p)² + q has a maximum at (p, q)',
+    hint: 'Bait at (4, 9). Place the vertex there: p=4, q=9. Raise q step by step.',
+    startEq: '-(x-4)^2 + 4',
+    stars: [{ x: 4, y: 9 }],
+    presets: ['-(x-4)^2 + 4', '-(x-4)^2 + 7', '-(x-4)^2 + 9'],
+    bonusQ: {
+      q: 'Does (2, 5) lie on y = −(x − 4)² + 9?',
+      choices: ['Yes', 'No'],
+      answer: 'Yes',
+      explain: 'Sub x = 2: y = −(2−4)² + 9 = −4 + 9 = 5. That matches, so (2, 5) is on the curve.',
+    },
+  },
+  {
+    world: 'WORLD 2-2', title: 'MINIMUM POINT',
+    desc: 'y = (x−p)² + q has a minimum at (p, q)',
+    hint: 'Bait is at the very bottom (7, 1). Set p=7 and lower q until q=1.',
+    startEq: '(x-7)^2 + 5',
+    stars: [{ x: 7, y: 1 }],
+    presets: ['(x-7)^2 + 5', '(x-7)^2 + 3', '(x-7)^2 + 1'],
+    bonusQ: {
+      q: 'What is the minimum point of y = (x − 7)² + 1?',
+      choices: ['(1, 7)', '(7, −1)', '(−7, 1)', '(7, 1)'],
+      answer: '(7, 1)',
+      explain: 'In y = (x − p)² + q the minimum is at (p, q). Here p = 7, q = 1, so the minimum is (7, 1).',
+    },
+  },
+  {
+    world: 'WORLD 2-3', title: 'AXIS OF SYMMETRY',
+    desc: 'A parabola is symmetric about x = p',
+    hint: 'Same height on both sides → axis at x=7 (halfway between 5 and 9). Try −(x−7)²+9.',
+    startEq: '-(x-7)^2 + 6',
+    stars: [{ x: 5, y: 5 }, { x: 9, y: 5 }],
+    presets: ['-(x-7)^2 + 6', '-(x-7)^2 + 8', '-(x-7)^2 + 9'],
+    bonusQ: {
+      q: 'Does (5, 5) lie on y = −(x − 7)² + 9?',
+      choices: ['Yes', 'No'],
+      answer: 'Yes',
+      explain: 'Sub x = 5: y = −(5−7)² + 9 = −4 + 9 = 5. Matches! And by symmetry, (9, 5) also lies on the curve.',
+    },
+  },
+  {
+    world: 'WORLD 2-4', title: 'NEGATIVE COEFFICIENT',
+    desc: 'Negative a flips the parabola — peak instead of trough',
+    hint: 'Three hoops: peak at (7, 8), sides at y=4. Try a=−1: −(x−7)²+8.',
+    startEq: '-0.5(x-7)^2 + 8',
+    stars: [{ x: 5, y: 4 }, { x: 7, y: 8 }, { x: 9, y: 4 }],
+    presets: ['-0.5(x-7)^2 + 8', '-(x-7)^2 + 6', '-(x-7)^2 + 8'],
+    bonusQ: {
+      q: 'What is the maximum value of y = −(x − 7)² + 8?',
+      choices: ['7', '8', '−8', '49'],
+      answer: '8',
+      explain: 'The maximum occurs at the vertex (7, 8). Subbing x = 7: y = −0 + 8 = 8.',
+    },
+  },
+  {
+    world: 'WORLD 2-5', title: 'NEGATIVE VERTEX',
+    desc: 'y = (x−p)² + q dips below zero when q is negative',
+    hint: 'Bait below zero at (6, −4). Set p=6, q=−4: y = (x−6)²−4.',
+    startEq: '(x-6)^2 - 1',
+    stars: [{ x: 6, y: -4 }],
+    presets: ['(x-6)^2 - 1', '(x-6)^2 - 2', '(x-6)^2 - 4'],
+    bonusQ: {
+      q: 'What is the minimum value of y = (x − 6)² − 4?',
+      choices: ['−6', '−4', '0', '4'],
+      answer: '−4',
+      explain: 'The minimum is at the vertex (6, −4). Subbing x = 6: y = 0 − 4 = −4.',
+    },
+  },
+
+  // ── WORLD 3: QUADRATIC — FACTORED & STANDARD FORM ─────────
+  {
+    world: 'WORLD 3-1', title: 'FACTORED FORM',
+    desc: 'y = a(x−r₁)(x−r₂) has x-intercepts at x = r₁ and x = r₂',
+    hint: 'Roots at x=3 and x=9 → peak at x=6. Scale a toward −1: y=−(x−3)(x−9).',
+    startEq: '-0.5(x-3)(x-9)',
+    stars: [{ x: 6, y: 9 }],
+    presets: ['-0.5(x-3)(x-9)', '-0.8(x-3)(x-9)', '-(x-3)(x-9)'],
+    bonusQ: {
+      q: 'Where does y = −(x − 3)(x − 9) cross the x-axis?',
+      choices: ['x = 3 only', 'x = 9 only', 'x = 3 and x = 9', 'x = 6'],
+      answer: 'x = 3 and x = 9',
+      explain: 'Set y = 0: −(x−3)(x−9) = 0 → x = 3 or x = 9. These are the roots (x-intercepts).',
+    },
+  },
+  {
+    world: 'WORLD 3-2', title: 'STANDARD FORM',
+    desc: 'y = ax² + bx + c — expand vertex form to find standard form',
+    hint: '-(x−6)²/2+8 expands to −x²/2+6x−10. Adjust c until both hoops sit at y=6.',
+    startEq: '-x^2/2 + 6x - 16',
+    stars: [{ x: 4, y: 6 }, { x: 8, y: 6 }],
+    presets: ['-x^2/2 + 6x - 16', '-x^2/2 + 6x - 13', '-x^2/2 + 6x - 10'],
+    bonusQ: {
+      q: 'Does (6, 8) lie on y = −x²/2 + 6x − 10?',
+      choices: ['Yes', 'No'],
+      answer: 'Yes',
+      explain: 'Sub x = 6: y = −36/2 + 36 − 10 = −18 + 36 − 10 = 8. It does!',
+    },
+  },
+
+  // ── WORLD 4: POWER FUNCTIONS y = axⁿ ─────────────────────
+  {
+    world: 'WORLD 4-1', title: 'CONSTANT (n=0)',
+    desc: 'y = c is a horizontal line — gradient is always zero',
+    hint: 'All three hoops sit at y=4. A flat line y=4 passes through all of them!',
+    startEq: '2',
+    stars: [{ x: 3, y: 4 }, { x: 7, y: 4 }, { x: 11, y: 4 }],
+    presets: ['2', '3', '4'],
+    bonusQ: {
+      q: 'What is the gradient of the line y = 4?',
+      choices: ['−4', '0', '4', 'Undefined'],
+      answer: '0',
+      explain: 'A constant function is a flat horizontal line — it never rises or falls, so gradient = 0.',
+    },
+  },
+  {
+    world: 'WORLD 4-2', title: 'CUBIC (n=3)',
+    desc: 'y = x³ ÷ k — a cubic curve that rises faster than a parabola',
+    hint: 'Bait at (6, 8). 6³ = 216. What divides 216 to get 8? 216÷27=8. So y = x³÷27.',
+    startEq: 'x^3/50',
+    stars: [{ x: 6, y: 8 }],
+    presets: ['x^3/50', 'x^3/35', 'x^3/27'],
+    bonusQ: {
+      q: 'Does (3, 1) lie on y = x³ ÷ 27?',
+      choices: ['Yes', 'No'],
+      answer: 'Yes',
+      explain: 'Sub x = 3: y = 3³ ÷ 27 = 27 ÷ 27 = 1. So (3, 1) is on the curve.',
+    },
+  },
+  {
+    world: 'WORLD 4-3', title: 'RECIPROCAL (n=−1)',
+    desc: 'y = k/x — a hyperbola. As x grows, y shrinks.',
+    hint: 'Bait at (3, 4): k÷3=4 → k=12. Try y = 12/x.',
+    startEq: '6/x',
+    stars: [{ x: 3, y: 4 }],
+    presets: ['6/x', '9/x', '12/x'],
+    startX: 0.5,
+    bonusQ: {
+      q: 'Does (4, 3) lie on y = 12/x?',
+      choices: ['Yes', 'No'],
+      answer: 'Yes',
+      explain: 'Sub x = 4: y = 12 ÷ 4 = 3. So (4, 3) lies on the curve.',
+    },
+  },
+  {
+    world: 'WORLD 4-4', title: 'INVERSE SQUARE (n=−2)',
+    desc: 'y = k/x² drops off faster than 1/x',
+    hint: 'Bait at (2, 4): k÷2²=4 → k÷4=4 → k=16. Try y = 16/x².',
+    startEq: '8/x^2',
+    stars: [{ x: 2, y: 4 }],
+    presets: ['8/x^2', '12/x^2', '16/x^2'],
+    startX: 0.5,
+    bonusQ: {
+      q: 'Does (4, 1) lie on y = 16/x²?',
+      choices: ['Yes', 'No'],
+      answer: 'Yes',
+      explain: 'Sub x = 4: y = 16 ÷ 4² = 16 ÷ 16 = 1. So (4, 1) is on the curve.',
+    },
+  },
+  {
+    world: 'WORLD 4-5', title: 'LINEAR & SQUARE (n=1, 2)',
+    desc: 'Mix n=1 and n=2 terms: y = x²/a + x/b',
+    hint: 'Bait at (4, 6). Try y = x²/4 + x/2. At x=4: 16/4 + 4/2 = 4+2 = 6. ✓',
+    startEq: 'x^2/4',
+    stars: [{ x: 4, y: 6 }],
+    presets: ['x^2/4', 'x^2/4 + x/4', 'x^2/4 + x/2'],
+    bonusQ: {
+      q: 'What is the y-intercept of y = x²/4 + x/2?',
+      choices: ['y = −1', 'y = 0', 'y = 0.5', 'y = 1'],
+      answer: 'y = 0',
+      explain: 'Set x = 0: y = 0/4 + 0/2 = 0. The curve passes through the origin (0, 0).',
+    },
+  },
+  {
+    world: 'WORLD 4-6', title: 'POWER SUMS',
+    desc: 'Combine power terms: y = ax² + bx + c',
+    hint: 'Both hoops at y=6. Try −x²/2+5x−2: at x=2: −2+10−2=6 ✓, at x=8: −32+40−2=6 ✓.',
+    startEq: '-x^2/2 + 5x - 6',
+    stars: [{ x: 2, y: 6 }, { x: 8, y: 6 }],
+    presets: ['-x^2/2 + 5x - 6', '-x^2/2 + 5x - 4', '-x^2/2 + 5x - 2'],
+    bonusQ: {
+      q: 'Does (4, 10) lie on y = −x²/2 + 5x − 2?',
+      choices: ['Yes', 'No'],
+      answer: 'Yes',
+      explain: 'Sub x = 4: y = −16/2 + 20 − 2 = −8 + 20 − 2 = 10. It does!',
+    },
+  },
+
+  // ── WORLD 5: EXPONENTIAL FUNCTIONS y = k·aˣ ───────────────
+  {
+    world: 'WORLD 5-1', title: 'BASE 2',
+    desc: 'y = 2^x doubles with every step.',
+    hint: 'At x=3, 2³=8. The hoop is right there! Try y = 2^x.',
+    startEq: '0.5(2^x)',
+    stars: [{ x: 3, y: 8 }],
+    presets: ['0.5(2^x)', '0.75(2^x)', '2^x'],
+    bonusQ: {
+      q: 'What is the y-intercept of y = 2^x?',
+      choices: ['y = 0', 'y = 1', 'y = 2', 'No y-intercept'],
+      answer: 'y = 1',
+      explain: 'Set x = 0: y = 2⁰ = 1. Any base raised to the power 0 equals 1, so the y-intercept is 1.',
+    },
+  },
+  {
+    world: 'WORLD 5-2', title: 'SCALING k',
+    desc: 'y = k·2^x — k stretches or shrinks the curve vertically',
+    hint: 'Bait at (3, 4). k×2³=4 → k×8=4 → k=0.5. Try y = 0.5(2^x).',
+    startEq: '2^x',
+    stars: [{ x: 3, y: 4 }],
+    presets: ['2^x', '0.75(2^x)', '0.5(2^x)'],
+    bonusQ: {
+      q: 'Does (4, 8) lie on y = 0.5 × 2^x?',
+      choices: ['Yes', 'No'],
+      answer: 'Yes',
+      explain: 'Sub x = 4: y = 0.5 × 2⁴ = 0.5 × 16 = 8. So (4, 8) is on the curve.',
+    },
+  },
+  {
+    world: 'WORLD 5-3', title: 'BASE 3',
+    desc: 'y = 3^x triples with every step — even faster than base 2',
+    hint: 'At x=2, 3²=9. Try y = 3^x to land right on the bait!',
+    startEq: '0.2(3^x)',
+    stars: [{ x: 2, y: 9 }],
+    presets: ['0.2(3^x)', '0.5(3^x)', '3^x'],
+    bonusQ: {
+      q: 'What is the value of y when x = 3 on y = 3^x?',
+      choices: ['9', '18', '27', '81'],
+      answer: '27',
+      explain: '3³ = 3 × 3 × 3 = 27. Exponentials grow fast — each step multiplies by the base.',
+    },
+  },
+];
+
+// ═══════════════════════════════════════
+// EQUATION PARSER
+// ═══════════════════════════════════════
+function parseRHS(rhs) {
+  if (!rhs || !rhs.trim()) return { valid: false };
+  try {
+    let s = rhs.trim();
+
+    // Convert ^ to Math.pow to avoid JS unary-minus-before-** SyntaxError.
+    // Handle three patterns in order:
+    //   (inner)^(exp)   → Math.pow((inner),(exp))
+    //   (inner)^digit   → Math.pow((inner),digit)
+    //   word^(exp)      → Math.pow(word,(exp))
+    //   word^digit      → Math.pow(word,digit)
+    // Apply repeatedly until no ^ remain.
+    let prev = '';
+    while (s !== prev) {
+      prev = s;
+      s = s.replace(/(\([^()]*\)|[\w.]+)\^\(([^()]*)\)/g, 'Math.pow($1,($2))');
+      s = s.replace(/(\([^()]*\)|[\w.]+)\^(\d+\.?\d*)/g,  'Math.pow($1,$2)');
+      s = s.replace(/(\([^()]*\)|[\w.]+)\^([\w]+)/g,      'Math.pow($1,$2)');
+    }
+
+    // Implicit multiplication
+    s = s.replace(/(\d)(x)/g, '$1*$2');
+    s = s.replace(/(\d)\(/g,  '$1*(');
+    s = s.replace(/\)\(/g,    ')*(');
+    s = s.replace(/\)(x)/g,   ')*$1');
+    s = s.replace(/(x)\(/g,   '$1*(');
+
+    // Named constants / functions
+    s = s.replace(/\bpi\b/gi,   'Math.PI');
+    s = s.replace(/\be\b/g,     'Math.E');
+    s = s.replace(/\bsqrt\b/gi, 'Math.sqrt');
+    s = s.replace(/\babs\b/gi,  'Math.abs');
+    s = s.replace(/\bsin\b/gi,  'Math.sin');
+    s = s.replace(/\bcos\b/gi,  'Math.cos');
+    s = s.replace(/\btan\b/gi,  'Math.tan');
+
+    const fn = new Function('x',
+      'try { var r = (' + s + '); return typeof r === "number" ? r : NaN; } catch(e) { return NaN; }'
+    );
+    // Smoke-test at several x values
+    for (let tx = 0; tx <= 14; tx += 2) {
+      if (typeof fn(tx) !== 'number') return { valid: false };
+    }
+    return { valid: true, fn };
+  } catch(e) { return { valid: false }; }
+}
+
+function safeEval(fn, x) {
+  try { const v = fn(x); return (isFinite(v) && !isNaN(v)) ? v : null; }
+  catch(e) { return null; }
+}
+
+function detectType(rhs) {
+  const s = rhs.replace(/\s/g, '');
+  // Use negative lookahead so e.g. x^23 doesn't match \^2
+  if (/\*\*3(?!\d)|\^3(?!\d)/.test(s))   return 'CUBIC';
+  if (/\*\*2(?!\d)|\^2(?!\d)/.test(s))   return 'QUADRATIC';
+  if (/sin|cos|tan/.test(s))             return 'TRIG';
+  if (/\d\*\*x|\d\^x/.test(s))          return 'EXPONENTIAL';
+  if (/x/.test(s))                       return 'LINEAR';
+  return 'CONSTANT';
+}
+
+// null = any type allowed
+const WORLD_ALLOWED_TYPES = [
+  ['LINEAR', 'CONSTANT'],                       // W1 Linear
+  ['QUADRATIC'],                                // W2 Quadratic
+  ['QUADRATIC', 'CUBIC', 'LINEAR', 'CONSTANT'], // W3 Factored
+  null,                                         // W4 Mixed (any)
+  ['EXPONENTIAL'],                              // W5 Exponential
+];
+
+const WORLD_TYPE_NAMES = ['Linear', 'Quadratic', 'Quadratic / Factored', 'Mixed', 'Exponential'];
+
+function getWorldIdx() {
+  return WORLD_STARTS.findIndex((start, i) => {
+    const next = WORLD_STARTS[i + 1] ?? LEVELS.length;
+    return levelIdx >= start && levelIdx < next;
+  });
+}
+
+function showWorldError(title, typeMsg) {
+  document.getElementById('world-error-title').textContent = title;
+  document.getElementById('world-error-type').textContent = typeMsg;
+  document.getElementById('world-error').classList.add('show');
+}
+
+function hideWorldError() {
+  document.getElementById('world-error').classList.remove('show');
+}
+
+// ═══════════════════════════════════════
+// CANVAS SETUP
+// ═══════════════════════════════════════
+const canvas  = document.getElementById('game');
+const ctx     = canvas.getContext('2d');
+
+// Math coordinate bounds
+const X_MIN = 0, X_MAX = 14;
+const Y_MIN = -12, Y_MAX = 12;
+
+// Canvas margins (pixels) for axis labels
+const ML = 52, MB = 36, MT = 16, MR = 16;
+
+let GW, GH; // game area width/height in pixels
+
+function resize() {
+  const panel = document.getElementById('right-panel');
+  canvas.width  = panel.clientWidth;
+  canvas.height = panel.clientHeight;
+  GW = canvas.width  - ML - MR;
+  GH = canvas.height - MT - MB;
+}
+window.addEventListener('resize', () => { resize(); });
+resize();
+
+function m2c(mx, my) {
+  const cx = ML + (mx - X_MIN) / (X_MAX - X_MIN) * GW;
+  const cy = MT + GH - (my - Y_MIN) / (Y_MAX - Y_MIN) * GH;
+  return [cx, cy];
+}
+
+// ═══════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════
+let levelIdx   = 0;
+let eqFn       = null;
+let eqValid    = false;
+let stars      = [];   // [{x,y,collected,scale,flash}]
+let particles  = [];
+let clouds     = [];
+
+// Animation
+let animRunning = false;
+let animX       = 0;           // current character x (0..X_MAX)
+let animSpeed   = 4.0;         // math units per second
+let launchTimer = null;
+
+// Level complete
+let levelComplete = false;
+
+// ═══════════════════════════════════════
+// CLOUDS (decorative)
+// ═══════════════════════════════════════
+function makeClouds() {
+  // Seaweed beds: x = base position, w = size/height multiplier
+  clouds = [
+    { x: 0.6,  y: 0, w: 1.1 },
+    { x: 1.4,  y: 0, w: 0.8 },
+    { x: 2.5,  y: 0, w: 1.3 },
+    { x: 3.4,  y: 0, w: 0.9 },
+    { x: 4.5,  y: 0, w: 1.5 },
+    { x: 5.3,  y: 0, w: 0.7 },
+    { x: 6.2,  y: 0, w: 1.2 },
+    { x: 7.1,  y: 0, w: 1.0 },
+    { x: 8.0,  y: 0, w: 0.85 },
+    { x: 9.0,  y: 0, w: 1.4 },
+    { x: 10.0, y: 0, w: 0.75 },
+    { x: 11.0, y: 0, w: 1.1 },
+    { x: 12.0, y: 0, w: 0.95 },
+    { x: 12.8, y: 0, w: 1.3 },
+  ];
+}
+makeClouds();
+
+// ═══════════════════════════════════════
+// PARTICLES
+// ═══════════════════════════════════════
+function spawnStarBurst(mx, my) {
+  for (let i = 0; i < 22; i++) {
+    const a = (i / 22) * Math.PI * 2;
+    const s = 1.5 + Math.random() * 3;
+    particles.push({
+      x: mx, y: my,
+      vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+      life: 0.9 + Math.random() * 0.5, maxLife: 1.4,
+      size: 3 + Math.random() * 5,
+      hue: 20 + Math.random() * 25,  // orange burst
+    });
+  }
+}
+
+function spawnTrail(mx, my) {
+  if (Math.random() > 0.4) return;
+  // Bubbles rise upward
+  particles.push({
+    x: mx + (Math.random() - 0.5) * 0.3,
+    y: my,
+    vx: (Math.random() - 0.5) * 0.15,
+    vy: 0.3 + Math.random() * 0.4,  // rising (positive y = up in math coords)
+    life: 0.6, maxLife: 0.6,
+    size: 2 + Math.random() * 4,
+    hue: 0,  // used as tint offset in drawParticles
+  });
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x   += p.vx * dt;
+    p.y   += p.vy * dt;
+    p.vy  -= 3 * dt;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+// ═══════════════════════════════════════
+// LEVEL MANAGEMENT
+// ═══════════════════════════════════════
+function loadLevel(idx) {
+  levelIdx     = idx;
+  levelComplete = false;
+  animRunning  = false;
+  animX        = LEVELS[idx].startX ?? 0;
+  eqFn         = null;
+  eqValid      = false;
+  particles    = [];
+
+  const lv = LEVELS[idx];
+
+  // Build stars
+  stars = lv.stars.map(s => ({ ...s, collected: false, scale: 1, flash: 0 }));
+
+  // Update left panel
+  document.getElementById('level-title').textContent = lv.world;
+  document.getElementById('level-desc').textContent  = lv.desc;
+  document.getElementById('level-hint').textContent  = lv.hint;
+  document.getElementById('banner-world').textContent = lv.world;
+  document.getElementById('banner-title').textContent = lv.title;
+
+  renderStarPips();
+  // Set equation input
+  eqInput.value = lv.startEq;
+  eqInput.classList.remove('error');
+  renderEqDisplay(lv.startEq);
+  applyEquation(lv.startEq, false); // load without auto-launch
+
+  document.getElementById('next-btn').classList.remove('visible');
+  document.getElementById('win-flash').classList.remove('show');
+  document.getElementById('launch-prompt').classList.remove('hide');
+  document.getElementById('bonus-panel').classList.remove('show');
+  document.getElementById('bonus-choices').innerHTML = '';
+  document.getElementById('bonus-result').classList.remove('show');
+  bonusAnswered = false;
+
+  // Show bonus question immediately if this level has one
+  if (LEVELS[idx].bonusQ) {
+    showBonusQ(LEVELS[idx].bonusQ);
+  }
+
+  // Reset hint
+  document.getElementById('level-hint').classList.remove('show');
+  document.getElementById('hint-btn').innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-1px" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> Show Hint';
+
+  tangentX = null;
+  tangentMode = false;
+  const tBtn = document.getElementById('tangent-btn');
+  if (tBtn) { tBtn.classList.remove('active'); tBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-1px" aria-hidden="true"><path d="M3 21L21 3M3 21l6-2M3 21l2-6"/></svg> Draw tangent'; }
+  const tInfo = document.getElementById('tangent-info');
+  if (tInfo) { tInfo.textContent = ''; tInfo.classList.remove('show'); }
+
+  // Show tangent tool only for quadratic (W2) and factored/standard (W3) — levels 5–11
+  const showTangent = idx >= 5 && idx <= 11;
+  document.getElementById('tangent-section').style.display = showTangent ? '' : 'none';
+
+  // Update progress bar
+  const totalLevels = LEVELS.length;
+  const pct = ((idx + 1) / totalLevels) * 100;
+  const fill = document.getElementById('progress-fill');
+  const label = document.getElementById('progress-label');
+  if (fill) fill.style.width = pct + '%';
+  if (label) label.textContent = (idx + 1) + ' / ' + totalLevels;
+
+  updateWorldTabs();
+}
+
+function renderStarPips() {
+  const row = document.getElementById('stars-row');
+  row.innerHTML = '';
+  stars.forEach((s, i) => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'star-pip');
+    svg.setAttribute('viewBox', '0 0 20 20');
+    const star = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    star.setAttribute('points', '10,1 12.9,7 19.5,7.6 14.8,12.1 16.2,18.5 10,15.4 3.8,18.5 5.2,12.1 0.5,7.6 7.1,7');
+    star.setAttribute('fill', s.collected ? '#FFD700' : '#44444488');
+    star.setAttribute('stroke', s.collected ? '#FFD70088' : '#33333388');
+    star.setAttribute('stroke-width', '0.5');
+    svg.appendChild(star);
+    row.appendChild(svg);
+  });
+}
+
+
+function nextLevel() {
+  if (levelIdx + 1 < LEVELS.length) {
+    loadLevel(levelIdx + 1);
+  } else {
+    // All levels done
+    document.getElementById('win-flash').querySelector('.win-text').textContent = 'ALL OCEANS CLEARED';
+    document.getElementById('win-flash').classList.add('show');
+  }
+}
+
+// World boundaries: first level index for each world number (0-based)
+const WORLD_STARTS = [0, 5, 10, 12, 18];
+
+function jumpToWorld(worldNum) {
+  loadLevel(WORLD_STARTS[worldNum]);
+}
+
+function updateWorldTabs() {
+  const tabs = document.querySelectorAll('.world-tab');
+  const currentWorld = WORLD_STARTS.findIndex((start, i) => {
+    const next = WORLD_STARTS[i + 1] ?? LEVELS.length;
+    return levelIdx >= start && levelIdx < next;
+  });
+  tabs.forEach((tab, i) => tab.classList.toggle('active', i === currentWorld));
+}
+
+function toggleHint() {
+  const hint = document.getElementById('level-hint');
+  const btn  = document.getElementById('hint-btn');
+  const showing = hint.classList.toggle('show');
+  btn.innerHTML = showing
+    ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-1px" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg> Hide Hint'
+    : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-1px" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> Show Hint';
+}
+
+// ── TANGENT TOOL ─────────────────────────────────────────────
+let tangentMode = false;
+let tangentX    = null;
+
+function toggleTangentMode() {
+  tangentMode = !tangentMode;
+  if (!tangentMode) tangentX = null;
+  const btn = document.getElementById('tangent-btn');
+  btn.classList.toggle('active', tangentMode);
+  const svgTan = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-1px" aria-hidden="true"><path d="M3 21L21 3M3 21l6-2M3 21l2-6"/></svg> ';
+  btn.innerHTML = tangentMode ? svgTan + 'Click the curve to place tangent' : svgTan + 'Draw tangent';
+  const tInfoEl = document.getElementById('tangent-info');
+  tInfoEl.textContent = tangentMode ? 'Click anywhere on the curve to drop a tangent line' : '';
+  tInfoEl.classList.toggle('show', tangentMode);
+}
+
+function numericalGradient(fn, x) {
+  const h = 0.0001;
+  const y1 = safeEval(fn, x - h);
+  const y2 = safeEval(fn, x + h);
+  if (y1 === null || y2 === null) return null;
+  return (y2 - y1) / (2 * h);
+}
+
+function drawTangent() {
+  if (tangentX === null || !eqFn) return;
+  const y0 = safeEval(eqFn, tangentX);
+  if (y0 === null) return;
+  const slope = numericalGradient(eqFn, tangentX);
+  if (slope === null || !isFinite(slope)) return;
+
+  ctx.save();
+  // Tangent line across full x range
+  ctx.strokeStyle = '#FFD700';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 5]);
+  ctx.globalAlpha = 0.85;
+  ctx.beginPath();
+  let first = true;
+  for (let tx = X_MIN; tx <= X_MAX; tx += 0.5) {
+    const ty = y0 + slope * (tx - tangentX);
+    if (ty < Y_MIN - 2 || ty > Y_MAX + 2) { first = true; continue; }
+    const [px, py] = m2c(tx, ty);
+    if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+
+  // Dot on curve at tangent point
+  const [ptX, ptY] = m2c(tangentX, y0);
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath(); ctx.arc(ptX, ptY, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(ptX, ptY, 6, 0, Math.PI * 2); ctx.stroke();
+
+  // Gradient label near the dot
+  const labelX = ptX + 10, labelY = ptY - 10;
+  const label = `m ≈ ${slope.toFixed(2)}`;
+  ctx.font = 'bold 13px Arial';
+  const tw = ctx.measureText(label).width;
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.beginPath(); ctx.roundRect(labelX - 4, labelY - 14, tw + 10, 20, 4); ctx.fill();
+  ctx.fillStyle = '#FFD700';
+  ctx.fillText(label, labelX + 1, labelY);
+
+  ctx.restore();
+}
+
+function insertAtCursor(text) {
+  const el = document.getElementById('eq-input');
+  const start = el.selectionStart;
+  const end   = el.selectionEnd;
+  el.value = el.value.slice(0, start) + text + el.value.slice(end);
+  el.selectionStart = el.selectionEnd = start + text.length;
+  el.focus();
+  el.dispatchEvent(new Event('input'));
+}
+
+// ═══════════════════════════════════════
+// EQUATION LOGIC
+// ═══════════════════════════════════════
+const eqInput    = document.getElementById('eq-input');
+const eqStatus   = document.getElementById('eq-status');
+
+let launchDelay  = null;
+
+function applyEquation(raw, autoLaunch = true) {
+  const result = parseRHS(raw);
+
+  if (result.valid) {
+    eqFn   = result.fn;
+    eqValid = true;
+    eqWrap.classList.remove('error');
+    eqStatus.classList.remove('error');
+    eqStatus.textContent = '';
+
+    // Check world type restriction
+    const worldIdx = getWorldIdx();
+    const allowed  = WORLD_ALLOWED_TYPES[worldIdx];
+    const eqType   = detectType(raw);
+    if (allowed !== null && !allowed.includes(eqType)) {
+      showWorldError(
+        'WRONG TYPE',
+        `This world wants a ${WORLD_TYPE_NAMES[worldIdx]} equation — you typed a ${eqType.charAt(0) + eqType.slice(1).toLowerCase()} one`
+      );
+      clearTimeout(launchDelay);
+      document.getElementById('err-flash').classList.remove('show');
+      return;
+    }
+
+    // Check whether any part of the curve falls within the visible window
+    let inWindow = false;
+    for (let x = X_MIN; x <= X_MAX; x += 0.5) {
+      const y = safeEval(result.fn, x);
+      if (y !== null && y >= Y_MIN && y <= Y_MAX) { inWindow = true; break; }
+    }
+    if (!inWindow) {
+      showWorldError(
+        'CURVE OFF SCREEN',
+        `Nothing to see here — your curve is outside the graph (y needs to be between −12 and 12)`
+      );
+      clearTimeout(launchDelay);
+      document.getElementById('err-flash').classList.remove('show');
+      return;
+    }
+
+    hideWorldError();
+
+    // Schedule launch
+    if (autoLaunch) {
+      clearTimeout(launchDelay);
+      launchDelay = setTimeout(() => startRun(), 800);
+    }
+
+    document.getElementById('err-flash').classList.remove('show');
+  } else {
+    eqFn   = null;
+    eqValid = false;
+    eqWrap.classList.add('error');
+    eqStatus.classList.add('error');
+    eqStatus.textContent = 'That equation isn\'t valid — double-check it';
+    clearTimeout(launchDelay);
+
+    hideWorldError();
+    document.getElementById('err-flash').classList.add('show');
+    setTimeout(() => document.getElementById('err-flash').classList.remove('show'), 400);
+  }
+}
+
+function renderEqDisplay(raw) {
+  const body = document.getElementById('eq-render-body');
+  if (!body) return;
+  // Escape HTML, then convert ^(...) and ^word/digits to <sup>
+  let s = raw
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // ^(expr) — parenthesised exponent
+  s = s.replace(/\^\(([^)]+)\)/g, '<sup>$1</sup>');
+  // ^digit(s) or ^letter(s)
+  s = s.replace(/\^([0-9a-zA-Z]+)/g, '<sup>$1</sup>');
+  body.innerHTML = s || '<span style="opacity:0.3">…</span>';
+}
+
+function triggerEquationChange(raw) {
+  const clean = raw.replace(/\n/g, '');
+  if (eqInput.value !== clean) eqInput.value = clean;
+  renderEqDisplay(clean);
+  applyEquation(clean);
+}
+
+const eqWrap = document.getElementById('eq-wrap');
+eqInput.addEventListener('focus', () => eqWrap.classList.add('focused'));
+eqInput.addEventListener('blur',  () => eqWrap.classList.remove('focused'));
+eqWrap.addEventListener('click',  () => eqInput.focus());
+
+eqInput.addEventListener('input', function() {
+  triggerEquationChange(this.value);
+});
+eqInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); clearTimeout(launchDelay); startRun(); }
+});
+
+// Canvas click → place tangent
+document.getElementById('game').addEventListener('click', function(e) {
+  if (!tangentMode || !eqFn) return;
+  const rect = this.getBoundingClientRect();
+  const scaleX = this.width  / rect.width;
+  const scaleY = this.height / rect.height;
+  const px = (e.clientX - rect.left) * scaleX;
+  const py = (e.clientY - rect.top)  * scaleY;
+  // Convert canvas pixels → math coords
+  const mx = X_MIN + (px - ML) / GW * (X_MAX - X_MIN);
+  if (mx < X_MIN || mx > X_MAX) return;
+  tangentX = mx;
+  const slope = numericalGradient(eqFn, tangentX);
+  const y0    = safeEval(eqFn, tangentX);
+  if (slope !== null && isFinite(slope) && y0 !== null) {
+    const info = document.getElementById('tangent-info');
+    info.textContent = `x=${tangentX.toFixed(2)}, y=${y0.toFixed(2)}  ∴  m ≈ ${slope.toFixed(3)}`;
+    info.classList.add('show');
+  }
+});
+
+// ═══════════════════════════════════════
+// ANIMATION / RUN
+// ═══════════════════════════════════════
+let prevAnimX = 0;
+
+function startRun() {
+  if (!eqFn || levelComplete) return;
+  animRunning = true;
+  animX       = LEVELS[levelIdx].startX ?? 0;
+  prevAnimX   = animX;
+  ballAngle   = 0;
+  eqStatus.textContent = '';
+  document.getElementById('launch-prompt').classList.add('hide');
+}
+
+// Check stars swept between prevAnimX and animX this frame (avoids skipping)
+function checkStarCollections() {
+  let allCollected = true;
+  stars.forEach(s => {
+    if (s.collected) return;
+    // Star is in the swept x-range this frame?
+    if (s.x >= prevAnimX - 0.05 && s.x <= animX + 0.05) {
+      const charY = safeEval(eqFn, s.x) ?? null;
+      if (charY !== null && Math.abs(charY - s.y) < 0.55) {
+        s.collected = true;
+        s.flash     = 1.0;
+        spawnStarBurst(s.x, s.y);
+        renderStarPips();
+      }
+    }
+    if (!s.collected) allCollected = false;
+  });
+
+  if (allCollected && animRunning) {
+    levelComplete = true;
+    setTimeout(showLevelComplete, 600);
+  }
+}
+
+let bonusAnswered = false;
+
+function showLevelComplete() {
+  document.getElementById('win-flash').classList.add('show');
+  document.getElementById('win-sub').textContent =
+    levelIdx + 1 < LEVELS.length ? 'Hit next to keep going' : 'Every ocean cleared';
+
+  const lv = LEVELS[levelIdx];
+  if (lv.bonusQ && !bonusAnswered) {
+    showBonusQ(lv.bonusQ);
+  } else {
+    document.getElementById('next-btn').classList.add('visible');
+  }
+}
+
+function showBonusQ(bq) {
+  const panel   = document.getElementById('bonus-panel');
+  const qEl     = document.getElementById('bonus-q');
+  const choices  = document.getElementById('bonus-choices');
+  const result  = document.getElementById('bonus-result');
+
+  qEl.textContent = bq.q;
+  choices.innerHTML = '';
+  result.classList.remove('show');
+  result.innerHTML = '';
+
+  bq.choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'bonus-choice';
+    btn.textContent = c;
+    btn.onclick = () => handleBonusAnswer(c, bq);
+    choices.appendChild(btn);
+  });
+
+  panel.classList.add('show');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function handleBonusAnswer(chosen, bq) {
+  if (bonusAnswered) return;
+  bonusAnswered = true;
+
+  const btns = document.querySelectorAll('.bonus-choice');
+  const correct = chosen === bq.answer;
+
+  btns.forEach(btn => {
+    btn.classList.add('answered');
+    if (btn.textContent === bq.answer) btn.classList.add(correct ? 'correct' : 'reveal');
+    else if (btn.textContent === chosen && !correct) btn.classList.add('wrong');
+  });
+
+  const result = document.getElementById('bonus-result');
+  result.innerHTML = `
+    <div class="result-line ${correct ? 'ok' : 'bad'}">${correct ? 'Correct!' : 'Not quite — here\'s why:'}</div>
+    ${bq.explain}
+  `;
+  result.classList.add('show');
+
+  // Only unlock Next Level if the equation has already been solved.
+  // If they answered the bonus early (before solving), the next-btn
+  // will appear via showLevelComplete() once they clear all hoops.
+  if (levelComplete) {
+    setTimeout(() => {
+      document.getElementById('next-btn').classList.add('visible');
+    }, correct ? 800 : 1400);
+  }
+}
+
+// ═══════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════
+function render() {
+  const W = canvas.width, H = canvas.height;
+
+  // Ocean gradient — light at surface, dark in the deep
+  const ocean = ctx.createLinearGradient(0, 0, 0, H);
+  ocean.addColorStop(0,    '#1a8fa0');
+  ocean.addColorStop(0.35, '#0e5f7a');
+  ocean.addColorStop(0.75, '#083050');
+  ocean.addColorStop(1,    '#03142a');
+  ctx.fillStyle = ocean;
+  ctx.fillRect(0, 0, W, H);
+
+  // Caustic light rays near the surface
+  drawCaustics(W, H);
+
+  // Upper-ocean depth vignette — softens the empty top region
+  const vignette = ctx.createRadialGradient(W * 0.5, 0, 0, W * 0.5, 0, W * 0.75);
+  vignette.addColorStop(0,   'rgba(0,0,0,0.18)');
+  vignette.addColorStop(0.6, 'rgba(0,0,0,0.06)');
+  vignette.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, W, H * 0.55);
+
+  // Grid
+  drawGrid();
+
+  // Subtle darkening near the sea floor (behind seaweed)
+  const [floorX0] = m2c(X_MIN, Y_MIN);
+  const [floorX1, floorY] = m2c(X_MAX, Y_MIN);
+  const glowH = GH * 0.15;
+  const floorGlow = ctx.createLinearGradient(0, floorY - glowH, 0, floorY);
+  floorGlow.addColorStop(0, 'rgba(0,0,0,0)');
+  floorGlow.addColorStop(1, 'rgba(0,8,4,0.45)');
+  ctx.fillStyle = floorGlow;
+  ctx.fillRect(floorX0, floorY - glowH, floorX1 - floorX0, glowH);
+
+  // Seaweed
+  drawSeaweed();
+
+  // Sandy floor
+  drawGround();
+
+  // Trajectory (fishing line)
+  if (eqFn) drawTrajectory();
+  drawTangent();
+
+  // Targets (treasure chests)
+  drawHoops();
+
+  // Bubbles / particles
+  drawParticles();
+
+  // Fish
+  if (animRunning) drawCharacter();
+  else if (eqFn) drawLauncher();
+}
+
+function drawCaustics(W, H) {
+  const t = Date.now() / 2000;
+  ctx.save();
+  ctx.globalAlpha = 0.04;
+  for (let i = 0; i < 6; i++) {
+    const x = (i / 6 + t * 0.05) % 1 * W;
+    const g = ctx.createLinearGradient(x, 0, x + 60, H * 0.5);
+    g.addColorStop(0, '#aaffee');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + 30, H * 0.5);
+    ctx.lineTo(x + 60, 0);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawGrid() {
+  ctx.lineWidth = 1;
+
+  // Minor gridlines
+  ctx.strokeStyle = 'rgba(100,220,255,0.08)';
+  for (let x = X_MIN; x <= X_MAX; x++) {
+    const [cx] = m2c(x, 0);
+    ctx.beginPath(); ctx.moveTo(cx, MT); ctx.lineTo(cx, MT + GH); ctx.stroke();
+  }
+  for (let y = Y_MIN; y <= Y_MAX; y++) {
+    const [, cy] = m2c(0, y);
+    ctx.beginPath(); ctx.moveTo(ML, cy); ctx.lineTo(ML + GW, cy); ctx.stroke();
+  }
+
+  // Major gridlines
+  ctx.strokeStyle = 'rgba(100,220,255,0.2)';
+  for (let x = X_MIN; x <= X_MAX; x += 2) {
+    const [cx] = m2c(x, 0);
+    ctx.beginPath(); ctx.moveTo(cx, MT); ctx.lineTo(cx, MT + GH); ctx.stroke();
+  }
+  for (let y = Y_MIN; y <= Y_MAX; y += 2) {
+    const [, cy] = m2c(0, y);
+    ctx.beginPath(); ctx.moveTo(ML, cy); ctx.lineTo(ML + GW, cy); ctx.stroke();
+  }
+
+  // Y-axis line
+  ctx.strokeStyle = 'rgba(100,220,255,0.5)';
+  ctx.lineWidth = 2;
+  const [axX] = m2c(0, 0);
+  ctx.beginPath(); ctx.moveTo(axX, MT); ctx.lineTo(axX, MT + GH); ctx.stroke();
+  // X-axis line (y=0) — brighter to mark the zero boundary
+  const [, axY] = m2c(0, 0);
+  ctx.strokeStyle = 'rgba(150,240,255,0.55)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(ML, axY); ctx.lineTo(ML + GW, axY); ctx.stroke();
+  // Subtle "below zero" darker tint
+  if (Y_MIN < 0) {
+    const [, zeroY] = m2c(0, 0);
+    const [, floorY] = m2c(0, Y_MIN);
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fillRect(ML, zeroY, GW, floorY - zeroY);
+  }
+
+  // X-axis labels
+  ctx.font = '700 13px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  for (let x = 2; x <= X_MAX; x += 2) {
+    const [cx] = m2c(x, 0);
+    const lbl = String(x);
+    const tw = ctx.measureText(lbl).width;
+    const ph = 20, py = MT + GH - ph - 6;
+    const px = cx - tw/2 - 7, pw = tw + 14;
+    ctx.fillStyle = 'rgba(3,20,42,0.75)';
+    ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 5); ctx.fill();
+    ctx.fillStyle = 'rgba(219,234,254,0.90)';
+    ctx.fillText(lbl, cx, py + 14);
+  }
+
+  // Y-axis labels
+  ctx.font = '700 13px "JetBrains Mono", monospace';
+  ctx.textAlign = 'right';
+  for (let y = Y_MIN; y <= Y_MAX; y += 2) {
+    if (y === 0) continue;
+    const [, cy] = m2c(0, y);
+    const lbl = String(y);
+    const tw = ctx.measureText(lbl).width;
+    const px = ML - tw - 16, py = cy - 10, pw = tw + 14, ph = 20;
+    ctx.fillStyle = y < 0 ? 'rgba(3,10,30,0.80)' : 'rgba(3,20,42,0.72)';
+    ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 5); ctx.fill();
+    ctx.fillStyle = y < 0 ? '#93c5fd' : 'rgba(219,234,254,0.88)';
+    ctx.fillText(lbl, ML - 8, cy + 5);
+  }
+  ctx.textAlign = 'left';
+}
+
+// Draw a single thick filled seaweed blade
+function drawBlade(bx, by, h, angle, swayT, bladeW) {
+  const segs = 10;
+  const spine = [];
+
+  // Build curved spine with natural S-curve sway
+  for (let k = 0; k <= segs; k++) {
+    const frac = k / segs;
+    const curve = Math.sin(swayT + frac * 2.8) * 14 * frac * frac;
+    spine.push({
+      x: bx + Math.sin(angle) * h * frac + curve,
+      y: by - Math.cos(angle) * h * frac,
+      frac
+    });
+  }
+
+  // Perpendicular to lean angle (for width)
+  const px =  Math.cos(angle);
+  const py = -Math.sin(angle);
+
+  // Build left / right edge with small notches for texture
+  const left = [], right = [];
+  for (let k = 0; k <= segs; k++) {
+    const { x, y, frac } = spine[k];
+    const w = bladeW * (1 - frac * 0.82);           // taper to tip
+    const notch = Math.sin(k * 3.1 + swayT) * w * 0.18; // edge texture
+    left.push ({ x: x - px * (w + notch), y: y - py * (w + notch) });
+    right.push({ x: x + px * (w - notch), y: y + py * (w - notch) });
+  }
+
+  ctx.save();
+  ctx.lineCap  = 'round';
+  ctx.lineJoin = 'round';
+
+  // ── Filled blade shape ──────────────────────────────────
+  ctx.beginPath();
+  ctx.moveTo(left[0].x, left[0].y);
+  for (let k = 1; k <= segs; k++) {
+    const mx = (left[k-1].x + left[k].x) / 2;
+    const my = (left[k-1].y + left[k].y) / 2;
+    ctx.quadraticCurveTo(left[k-1].x, left[k-1].y, mx, my);
+  }
+  // Pointed tip
+  ctx.lineTo(spine[segs].x, spine[segs].y);
+  // Right edge back down
+  for (let k = segs - 1; k >= 0; k--) {
+    const mx = (right[k+1].x + right[k].x) / 2;
+    const my = (right[k+1].y + right[k].y) / 2;
+    ctx.quadraticCurveTo(right[k+1].x, right[k+1].y, mx, my);
+  }
+  ctx.closePath();
+
+  // Dark olive gradient fill
+  const tip  = spine[segs];
+  const grad = ctx.createLinearGradient(bx, by, tip.x, tip.y);
+  grad.addColorStop(0,    '#0a1410');
+  grad.addColorStop(0.35, '#173320');
+  grad.addColorStop(0.75, '#1f4528');
+  grad.addColorStop(1,    '#275535');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Heavy dark outline
+  ctx.strokeStyle = 'rgba(4, 9, 6, 0.95)';
+  ctx.lineWidth   = 1.8;
+  ctx.stroke();
+
+  // ── Midrib highlight ─────────────────────────────────────
+  ctx.strokeStyle = 'rgba(65, 110, 72, 0.55)';
+  ctx.lineWidth   = Math.max(1, bladeW * 0.18);
+  ctx.beginPath();
+  ctx.moveTo(spine[0].x, spine[0].y);
+  for (let k = 1; k <= segs; k++) {
+    const mx = (spine[k-1].x + spine[k].x) / 2;
+    const my = (spine[k-1].y + spine[k].y) / 2;
+    ctx.quadraticCurveTo(spine[k-1].x, spine[k-1].y, mx, my);
+  }
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawSeaweed() {
+  const t = Date.now() / 1500;
+
+  // Frond angle presets for each cluster variant
+  const variants = [
+    [-0.30, -0.08, 0.10, 0.32],
+    [-0.22,  0.06, 0.28],
+    [-0.35, -0.12, 0.08, 0.30, 0.50],
+    [-0.18,  0.02, 0.22, 0.42],
+  ];
+
+  clouds.forEach((s, i) => {
+    const [bx, by] = m2c(s.x, Y_MIN);
+    const baseH  = GH * (0.16 + s.w * 0.045);   // height in canvas pixels
+    const bladeW = Math.max(6, GW * 0.013) * s.w; // blade width scales with plant size
+    const angles = variants[i % variants.length];
+
+    ctx.save();
+
+    // Back fronds (darker, slightly taller, drawn first)
+    angles.forEach((a, fi) => {
+      if (fi % 2 !== 0) return; // every other = back layer
+      const sway  = Math.sin(t * 0.85 + i * 1.4 + fi * 1.9) * 0.08;
+      const hMult = 0.85 + (fi * 0.04);
+      ctx.globalAlpha = 0.75;
+      drawBlade(bx, by, baseH * hMult, a + sway, t * 0.9 + i * 1.7 + fi * 1.3, bladeW * 0.88);
+    });
+
+    // Front fronds (full opacity, slightly shorter)
+    angles.forEach((a, fi) => {
+      if (fi % 2 === 0) return;
+      const sway  = Math.sin(t * 0.85 + i * 1.4 + fi * 1.9) * 0.08;
+      const hMult = 0.78 + (fi * 0.03);
+      ctx.globalAlpha = 1.0;
+      drawBlade(bx, by, baseH * hMult, a + sway, t * 0.9 + i * 1.7 + fi * 1.3, bladeW);
+    });
+
+    ctx.globalAlpha = 1;
+
+    // Rising bubble (every 3rd plant)
+    if (i % 3 === 0) {
+      const bT   = (t * 0.55 + i * 0.9) % 1;
+      const bAlp = Math.sin(bT * Math.PI) * 0.5;
+      const bRad = 2 + (i % 3);
+      ctx.globalAlpha = bAlp;
+      ctx.strokeStyle = 'rgba(120, 200, 215, 1)';
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      ctx.arc(bx + Math.sin(t + i) * 4, by - bT * baseH * 1.5, bRad, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(160, 220, 235, 0.12)';
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+  });
+}
+
+function drawGround() {
+  const [x0, y0] = m2c(X_MIN, Y_MIN);
+  const [x1]     = m2c(X_MAX, Y_MIN);
+  const floorH   = Math.max(16, GH * 0.055);
+
+  // Sandy ocean floor
+  const sandGrad = ctx.createLinearGradient(0, y0, 0, y0 + floorH);
+  sandGrad.addColorStop(0, '#c8a86b');
+  sandGrad.addColorStop(1, '#8b6a30');
+  ctx.fillStyle = sandGrad;
+  ctx.fillRect(x0, y0, x1 - x0, floorH);
+
+  // Pebble dots
+  ctx.fillStyle = 'rgba(100,70,30,0.35)';
+  for (let i = 0; i < 18; i++) {
+    const px = x0 + (i / 18) * (x1 - x0) + 10;
+    const pr = 2 + (i % 3);
+    ctx.beginPath();
+    ctx.ellipse(px, y0 + floorH * 0.4, pr * 1.6, pr * 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Dark strip at bottom
+  ctx.fillStyle = '#5a3a10';
+  ctx.fillRect(x0, y0 + floorH, x1 - x0, 4);
+}
+
+const TRAJ_SAMPLE = 280;
+
+function drawTrajectory() {
+  ctx.save();
+  ctx.setLineDash([8, 5]);
+  ctx.strokeStyle = 'rgba(80,220,255,0.7)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  let started = false;
+  for (let i = 0; i <= TRAJ_SAMPLE; i++) {
+    const x = X_MIN + (i / TRAJ_SAMPLE) * (X_MAX - X_MIN);
+    const y = safeEval(eqFn, x);
+    if (y === null || y < Y_MIN) { started = false; continue; }
+    const [cx, cy] = m2c(x, y);
+    if (!started) { ctx.moveTo(cx, cy); started = true; }
+    else ctx.lineTo(cx, cy);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ── TREASURE CHESTS ──
+function drawHoops() {
+  stars.forEach(s => {
+    if (s.flash > 0) s.flash = Math.max(0, s.flash - 0.05);
+    const [cx, cy] = m2c(s.x, s.y);
+    const ppu = GW / (X_MAX - X_MIN);
+    drawTreasure(cx, cy, ppu, s.collected, s.flash, s.x, s.y);
+  });
+}
+
+function drawTreasure(cx, cy, ppu, collected, flash, sx, sy) {
+  const r = Math.max(14, ppu * 0.32);
+  ctx.save();
+  ctx.globalAlpha = collected ? 0.2 : 1.0;
+  ctx.translate(cx, cy);
+
+  if (flash > 0) {
+    ctx.shadowBlur  = 28 * flash;
+    ctx.shadowColor = '#ff6080';
+  }
+
+  if (!collected) {
+    // Draw a 5-pointed gold star
+    const starPath = (outer, inner) => {
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const angle = (i * Math.PI / 5) - Math.PI / 2;
+        const rad   = i % 2 === 0 ? outer : inner;
+        const x = Math.cos(angle) * rad;
+        const y = Math.sin(angle) * rad;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+    };
+
+    // Glow
+    ctx.shadowBlur  = 18;
+    ctx.shadowColor = '#FFD700';
+
+    // Fill gradient
+    const starG = ctx.createRadialGradient(0, -r*0.2, r*0.1, 0, 0, r);
+    starG.addColorStop(0, '#fff6a0');
+    starG.addColorStop(0.5, '#FFD700');
+    starG.addColorStop(1, '#cc8800');
+    ctx.fillStyle = starG;
+    starPath(r, r * 0.42);
+    ctx.fill();
+
+    // Outline
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#cc8800'; ctx.lineWidth = r * 0.08;
+    starPath(r, r * 0.42);
+    ctx.stroke();
+
+    // Sparkle highlight
+    ctx.fillStyle = 'rgba(255,255,220,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(-r*0.18, -r*0.32, r*0.22, r*0.13, -0.6, 0, Math.PI*2);
+    ctx.fill();
+  } else {
+    // Collected: faint gold shimmer + bubbles
+    ctx.fillStyle = 'rgba(255,215,0,0.12)';
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.8, 0, Math.PI*2); ctx.fill();
+    for (let i = 0; i < 4; i++) {
+      const bx = (i - 1.5) * r * 0.32;
+      const by = -r * 0.3 - i * r * 0.22;
+      ctx.strokeStyle = 'rgba(255,220,80,0.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(bx, by, r * 0.09, 0, Math.PI*2); ctx.stroke();
+    }
+  }
+
+  ctx.shadowBlur = 0;
+
+  // Coordinate label — pill backdrop + JetBrains Mono
+  if (!collected) {
+    const fs = Math.max(11, Math.round(ppu * 0.24));
+    ctx.font = `700 ${fs}px "JetBrains Mono", monospace`;
+    ctx.textAlign = 'center';
+    const txt = `(${sx}, ${sy})`;
+    const tw = ctx.measureText(txt).width;
+    const lx = 0, ly = -r * 1.62;
+    const ph = fs + 6, pw = tw + 14;
+    // pill
+    ctx.fillStyle = 'rgba(3,20,42,0.82)';
+    ctx.beginPath();
+    ctx.roundRect(lx - pw/2, ly - ph + 4, pw, ph, ph/2);
+    ctx.fill();
+    // border
+    ctx.strokeStyle = '#FFD70040';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    // text
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText(txt, lx, ly);
+  }
+
+  ctx.restore();
+}
+
+function drawParticles() {
+  // Draw as rising bubbles
+  for (const p of particles) {
+    const [cx, cy] = m2c(p.x, p.y);
+    const a = Math.max(0, p.life / p.maxLife);
+    ctx.globalAlpha = a * 0.7;
+    const r = p.size * 0.9;
+    ctx.strokeStyle = `hsla(${180 + p.hue * 0.3}, 80%, 75%, 1)`;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    // Highlight
+    ctx.fillStyle = `hsla(200, 90%, 90%, 0.4)`;
+    ctx.beginPath(); ctx.arc(cx - r*0.25, cy - r*0.25, r*0.3, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// Fish tail wag angle
+let ballAngle = 0;
+
+function drawLauncher() {
+  if (!eqFn) return;
+  const sx0 = LEVELS[levelIdx]?.startX ?? 0;
+  const startY = safeEval(eqFn, sx0) ?? 0;
+  const [sx, sy] = m2c(sx0, startY);
+  drawShark(sx, sy, 0);
+}
+
+function drawCharacter() {
+  if (!eqFn) return;
+  const rawY  = safeEval(eqFn, animX) ?? 0;
+  const charY = rawY;
+  const [cx, cy] = m2c(animX, charY);
+  spawnTrail(animX, charY);
+  drawShark(cx, cy, ballAngle);
+}
+
+function drawShark(cx, cy, wag) {
+  const r = Math.max(16, GW * 0.034);  // slightly bigger than the fish was
+  const tailWag = Math.sin(wag * 2.5) * 0.3;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Crescent tail — wags side to side
+  ctx.save();
+  ctx.rotate(tailWag);
+  ctx.fillStyle = '#5a7a8a';
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.55, 0);
+  ctx.lineTo(-r * 1.6,  -r * 0.65);
+  ctx.quadraticCurveTo(-r * 1.1, 0, -r * 1.6, r * 0.65);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Body — elongated, grey-blue torpedo shape
+  const bodyG = ctx.createLinearGradient(-r, -r * 0.5, r, r * 0.5);
+  bodyG.addColorStop(0,   '#7a9aaa');
+  bodyG.addColorStop(0.4, '#5a7a8a');
+  bodyG.addColorStop(1,   '#3a5060');
+  ctx.fillStyle = bodyG;
+  ctx.shadowBlur  = 12;
+  ctx.shadowColor = 'rgba(60,100,140,0.5)';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r, r * 0.42, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // White belly
+  ctx.fillStyle = 'rgba(220,235,240,0.75)';
+  ctx.beginPath();
+  ctx.ellipse(r * 0.1, r * 0.18, r * 0.65, r * 0.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tall dorsal fin
+  ctx.fillStyle = '#4a6a7a';
+  ctx.beginPath();
+  ctx.moveTo(r * 0.05, -r * 0.38);
+  ctx.lineTo(r * 0.35, -r * 1.1);
+  ctx.lineTo(r * 0.6,  -r * 0.38);
+  ctx.closePath();
+  ctx.fill();
+
+  // Pectoral fin (swept back)
+  ctx.fillStyle = '#4a6878';
+  ctx.beginPath();
+  ctx.moveTo(r * 0.05, r * 0.1);
+  ctx.lineTo(-r * 0.3, r * 0.72);
+  ctx.lineTo(r * 0.45, r * 0.25);
+  ctx.closePath();
+  ctx.fill();
+
+  // Eye — small, dark, menacing
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.arc(r * 0.55, -r * 0.1, r * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.beginPath();
+  ctx.arc(r * 0.57, -r * 0.13, r * 0.04, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Open mouth with jagged teeth
+  ctx.fillStyle = '#c8d8e0';
+  ctx.beginPath();
+  ctx.moveTo(r * 0.85, -r * 0.08);
+  ctx.lineTo(r * 1.05, r * 0.04);
+  ctx.lineTo(r * 0.85, r * 0.14);
+  ctx.quadraticCurveTo(r * 0.7, r * 0.06, r * 0.85, -r * 0.08);
+  ctx.fill();
+  // Teeth
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 3; i++) {
+    const tx = r * 0.9 + i * r * 0.055;
+    ctx.beginPath();
+    ctx.moveTo(tx, -r * 0.04);
+    ctx.lineTo(tx + r * 0.04, r * 0.04);
+    ctx.lineTo(tx + r * 0.025, -r * 0.04);
+    ctx.fill();
+  }
+
+  // Gill line
+  ctx.strokeStyle = 'rgba(50,70,90,0.5)';
+  ctx.lineWidth = Math.max(1.5, r * 0.06);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(r * 0.3, 0, r * 0.3, -0.6, 0.6);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════
+// GAME LOOP
+// ═══════════════════════════════════════
+let lastTs = 0;
+
+function loop(ts) {
+  const dt = Math.min((ts - lastTs) / 1000, 0.033);
+  lastTs = ts;
+
+  // Advance character
+  if (animRunning && eqFn) {
+    prevAnimX  = animX;
+    animX     += animSpeed * dt;
+    ballAngle += animSpeed * dt * 2.8;  // spin as ball travels
+    checkStarCollections();
+
+    if (animX > X_MAX) {
+      animRunning = false;
+      animX = X_MAX;
+
+      if (!levelComplete) {
+        // Not all stars collected — reset for retry
+        setTimeout(() => {
+          if (!levelComplete) {
+            document.getElementById('launch-prompt').classList.remove('hide');
+          }
+        }, 1000);
+      }
+    }
+  }
+
+  // Update particles
+  updateParticles(dt);
+
+  // Update star flash
+  stars.forEach(s => { if (s.flash > 0) s.flash -= dt * 2; });
+
+  render();
+  requestAnimationFrame(loop);
+}
+
+// ═══════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+function init() {
+  loadLevel(0);
+  requestAnimationFrame(loop);
+}
+
+init();
+
+// ═══════════════════════════════════════
+// ONBOARDING INSTRUCTION FLOW
+// ═══════════════════════════════════════
+(function () {
+
+  const overlay  = document.getElementById('onboard-overlay');
+  const ring     = document.getElementById('onboard-ring');
+  const tip      = document.getElementById('onboard-tip');
+  const eqWrap   = document.getElementById('eq-wrap');
+  const eqInput  = document.getElementById('eq-input');
+
+  let dismissed = false;
+
+  function position() {
+    const r   = eqWrap.getBoundingClientRect();
+    const PAD = 6;
+
+    // Red pulsing ring — surrounds eq-wrap
+    ring.style.left   = (r.left   - PAD) + 'px';
+    ring.style.top    = (r.top    - PAD) + 'px';
+    ring.style.width  = (r.width  + PAD * 2) + 'px';
+    ring.style.height = (r.height + PAD * 2) + 'px';
+
+    // Tooltip — centred above the ring with a small gap
+    tip.style.left = (r.left + r.width / 2) + 'px';
+    tip.style.top  = (r.top  - PAD - 88) + 'px';
+  }
+
+  function dismiss() {
+    if (dismissed) return;
+    dismissed = true;
+    overlay.classList.remove('visible');
+    overlay.classList.add('fading');
+    setTimeout(() => overlay.remove(), 450);
+  }
+
+  // Position immediately, then show on next paint
+  position();
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+  });
+
+  // Dismiss on any interaction with the equation box
+  eqWrap.addEventListener('click',   dismiss, { once: true });
+  eqInput.addEventListener('keydown', dismiss, { once: true });
+  eqInput.addEventListener('focus',   dismiss, { once: true });
+
+  // Auto-dismiss after 10 s
+  setTimeout(dismiss, 10000);
+
+  // Reposition if window resizes
+  window.addEventListener('resize', position);
+})();
+</script>
+</body>
+</html>
