@@ -682,52 +682,58 @@ body {
     overflow: hidden;
   }
 
-  /* ── Canvas first (top 50% of screen) ── */
+  /* ── Canvas first — 55% of screen ── */
   #right-panel {
     order: -1;
     width: 100%;
-    height: 50dvh;
+    height: 55dvh;
     min-height: 220px;
     flex: none;
     border-bottom: 1px solid var(--border);
   }
 
-  /* ── Controls scroll below canvas ── */
+  /* ── Controls — compact scrollable strip below canvas ── */
   #left-panel {
     order: 0;
     width: 100%;
     min-width: 0;
     flex: 1;
     border-right: none;
-    padding: 10px 14px 12px;
-    gap: 7px;
+    padding: 8px 14px 10px;
+    gap: 5px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   /* Hide grain overlay (perf) */
-  #left-panel::after { display: none; }
+  #left-panel::after  { display: none; }
+  /* Hide the top accent line — saves 2px and visual noise */
+  #left-panel::before { display: none; }
 
-  /* Tighter header row */
-  .back-btn { margin-bottom: 0; }
+  /* Collapse header — hide title + rule to save vertical space */
+  .panel-title { display: none; }
+  .rule        { display: none; }
+  /* Back btn stays but smaller */
+  .back-btn { margin-bottom: 0; font-size: 10px; }
 
-  /* Equation font */
+  /* Equation input */
   #eq-render, #eq-input { font-size: 17px; }
-  #eq-wrap   { min-height: 50px; }
-  #eq-input  { padding: 10px 12px 10px 62px; }
-  #eq-render { min-height: 50px; }
+  #eq-wrap   { min-height: 48px; }
+  #eq-input  { padding: 9px 12px 9px 60px; }
+  #eq-render { min-height: 48px; padding: 9px 12px; }
 
-  /* Larger touch targets on sup buttons */
-  .sup-btn { padding: 8px 13px; font-size: 14px; }
+  /* Superscript buttons */
+  .sup-btn { padding: 7px 12px; font-size: 13px; }
 
-  /* World tabs scroll horizontally */
-  #world-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .world-tab  { min-width: 52px; padding: 7px 3px; }
+  /* World tabs — fit all 5 on one line */
+  #world-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 0; }
+  .world-tab  { min-width: 0; flex: 1; padding: 6px 2px; font-size: 10px; }
+  .world-tab span { font-size: 8px !important; display: block; }
 
   /* Target coords pill — visible on mobile */
   #target-coords:not(:empty) { display: flex !important; }
 
-  /* Hide verbose content to save vertical space */
+  /* Hide verbose content */
   #level-desc      { display: none !important; }
   #level-hint      { display: none !important; }
   #hint-btn        { display: none !important; }
@@ -735,21 +741,23 @@ body {
   #tangent-section { display: none !important; }
   #world-error-sub { display: none; }
 
-  /* Onboarding — no positional ring on mobile, simple centred banner */
+  /* Onboarding — pin to top-left of canvas, out of gameplay area */
+  #onboard-overlay { pointer-events: none; }
   #onboard-ring    { display: none !important; }
+  #onboard-chevron { display: none; }
   #onboard-tip {
     position: fixed;
-    top: 25dvh;
+    top: 6px;
     left: 50%;
-    transform: translateX(-50%) translateY(-50%) !important;
+    transform: translateX(-50%) !important;
     animation: none !important;
     white-space: nowrap;
     z-index: 500;
+    padding: 7px 14px 9px;
+    font-size: 12px;
   }
-  #onboard-dismiss {
-    bottom: auto;
-    top: calc(25dvh + 32px);
-  }
+  #onboard-tip::after { display: none; } /* hide caret on mobile */
+  #onboard-dismiss { display: none; }
 }
 
 /* ══════════════════════════════════════════
@@ -2557,8 +2565,8 @@ init();
   eqInput.addEventListener('keydown', dismiss, { once: true });
   eqInput.addEventListener('focus',   dismiss, { once: true });
 
-  // Auto-dismiss after 10 s
-  setTimeout(dismiss, 10000);
+  // Auto-dismiss: 3 s on mobile, 10 s on desktop
+  setTimeout(dismiss, window.innerWidth <= 900 ? 3000 : 10000);
 })();
 </script>
 </body>
