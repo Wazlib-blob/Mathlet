@@ -741,6 +741,17 @@ body {
   #tangent-section { display: none !important; }
   #world-error-sub { display: none; }
 
+  /* Next button — fixed to bottom of screen so it's always tappable */
+  #next-btn.visible {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    border-radius: 0;
+    border-left: none; border-right: none; border-bottom: none;
+    padding: 16px;
+    font-size: 15px;
+    z-index: 300;
+  }
+
   /* Onboarding — pin to top-left of canvas, out of gameplay area */
   #onboard-overlay { pointer-events: none; }
   #onboard-ring    { display: none !important; }
