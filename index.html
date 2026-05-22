@@ -458,22 +458,63 @@ footer p { font-size: 11px; color: var(--dim2); font-weight: 600; letter-spacing
   to   { opacity:1; transform: translateY(0); }
 }
 
-/* ── RESPONSIVE ── */
+/* ══════════════════════════════════════════
+   RESPONSIVE — TABLET (≤ 900px)
+   ══════════════════════════════════════════ */
 @media (max-width: 900px) {
-  nav { padding: 20px 24px; }
+  nav { padding: 20px 28px; }
+
   #hero { min-height: auto; padding-top: 0; }
   .hero-content-row {
     grid-template-columns: 1fr;
-    padding: 100px 24px 52px;
+    padding: 110px 28px 56px;
     gap: 0;
   }
   .hero-right { display: none; }
-  .hero-h1 { font-size: clamp(28px, 7vw, 44px); }
-  #games { padding: 0 24px 80px; }
-  .games-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
-  .game-card.featured { grid-row: auto; }
+  .hero-h1 { font-size: clamp(30px, 6vw, 46px); max-width: 100%; }
+  .hero-sub { max-width: 100%; }
+
+  #games { padding: 0 28px 80px; }
+  .games-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    gap: 14px;
+  }
+  .game-card.featured { grid-column: 1 / -1; grid-row: auto; }
   .game-card.coming { opacity: 0.45 !important; filter: blur(0.4px); }
-  footer { padding: 18px 24px; flex-direction: column; gap: 4px; text-align: center; }
+  footer { padding: 18px 28px; flex-direction: column; gap: 4px; text-align: center; }
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE — MOBILE (≤ 600px)
+   ══════════════════════════════════════════ */
+@media (max-width: 600px) {
+  nav { padding: 18px 20px; }
+  .nav-logo { font-size: 16px; }
+  .shark-icon { width: 28px; height: 23px; }
+
+  .hero-content-row { padding: 100px 20px 48px; }
+  .hero-eyebrow { font-size: 9px; letter-spacing: 2px; margin-bottom: 20px; }
+  .hero-h1 { font-size: clamp(26px, 8vw, 38px); letter-spacing: -1px; margin-bottom: 20px; }
+  .hero-sub { font-size: 14px; margin-bottom: 32px; }
+  .hero-cta { font-size: 14px; padding: 12px 24px; }
+
+  .hero-scroll { bottom: 18px; }
+  .hero-scroll-label { font-size: 8px; }
+
+  #games { padding: 0 20px 64px; }
+  .games-title { font-size: 22px; }
+  .games-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .game-card.featured { grid-column: auto; }
+  .game-card { padding: 20px; }
+  .card-tag { font-size: 8px; }
+  .card-title { font-size: 17px; }
+  .card-desc { font-size: 13px; }
+
+  footer { padding: 16px 20px; font-size: 11px; }
 }
 </style>
 </head>
