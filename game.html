@@ -764,6 +764,27 @@ body {
   #tangent-section { display: none !important; }
   #world-error-sub { display: none; }
 
+  /* Win flash — shrink text so it fits the narrow canvas */
+  .win-text {
+    font-size: 17px;
+    letter-spacing: 3px;
+  }
+  .win-sub {
+    font-size: 10px;
+    letter-spacing: 2px;
+    margin-top: 6px;
+  }
+  /* Push win flash up so it clears the x-axis number row */
+  #win-flash {
+    justify-content: flex-start;
+    padding-top: 18%;
+  }
+
+  /* Level banner — smaller pill on mobile */
+  #level-banner { padding: 5px 14px; top: 8px; }
+  #banner-world { font-size: 8px; letter-spacing: 1.5px; }
+  #banner-title { font-size: 11px; letter-spacing: 1.5px; }
+
   /* Next button — fixed to bottom of screen so it's always tappable */
   #next-btn.visible {
     position: fixed;
@@ -813,6 +834,10 @@ body {
   .world-tab span { font-size: 8px !important; }
 
   #launch-prompt { bottom: 20px; font-size: 11px; padding: 5px 14px; }
+
+  /* Even smaller win text on tiny screens */
+  .win-text { font-size: 14px; letter-spacing: 2px; }
+  #win-flash { padding-top: 14%; }
 }
 </style>
 </head>
