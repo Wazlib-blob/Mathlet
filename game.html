@@ -748,21 +748,26 @@ body {
   /* Superscript buttons */
   .sup-btn { padding: 7px 12px; font-size: 13px; }
 
-  /* World tabs — fit all 5 on one line */
+  /* World tabs — fit all 5 on one line, boost contrast for inactive tabs */
   #world-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 0; }
-  .world-tab  { min-width: 0; flex: 1; padding: 6px 2px; font-size: 10px; }
-  .world-tab span { font-size: 8px !important; display: block; }
+  .world-tab  { min-width: 0; flex: 1; padding: 7px 2px; font-size: 11px; color: var(--text); opacity: 0.55; }
+  .world-tab.active { opacity: 1; }
+  .world-tab span { font-size: 9px !important; display: block; opacity: 0.8; }
 
   /* Target coords pill — visible on mobile */
   #target-coords:not(:empty) { display: flex !important; }
 
   /* Hide verbose content */
+  #level-title     { display: none !important; }  /* redundant — world shown in tabs */
   #level-desc      { display: none !important; }
   #level-hint      { display: none !important; }
   #hint-btn        { display: none !important; }
   #bonus-panel     { display: none !important; }
   #tangent-section { display: none !important; }
   #world-error-sub { display: none; }
+
+  /* Canvas level banner — redundant on mobile, hide it */
+  #level-banner    { display: none !important; }
 
   /* Win flash — shrink text so it fits the narrow canvas */
   .win-text {
@@ -796,23 +801,20 @@ body {
     z-index: 300;
   }
 
-  /* Onboarding — pin to top-left of canvas, out of gameplay area */
-  #onboard-overlay { pointer-events: none; }
-  #onboard-ring    { display: none !important; }
-  #onboard-chevron { display: none; }
-  #onboard-tip {
-    position: fixed;
-    top: 6px;
-    left: 50%;
-    transform: translateX(-50%) !important;
-    animation: none !important;
-    white-space: nowrap;
-    z-index: 500;
-    padding: 7px 14px 9px;
-    font-size: 12px;
+  /* Onboarding — hide overlay entirely; pulse the eq-wrap directly */
+  #onboard-overlay { display: none !important; }
+
+  /* Pulsing red glow on eq-wrap during onboarding on mobile */
+  #eq-wrap.onboard-mobile-glow {
+    box-shadow:
+      0 0 0 2px var(--red),
+      0 0 18px rgba(244,63,94,0.35);
+    animation: eq-mobile-pulse 1.6s ease-in-out infinite;
   }
-  #onboard-tip::after { display: none; } /* hide caret on mobile */
-  #onboard-dismiss { display: none; }
+  @keyframes eq-mobile-pulse {
+    0%, 100% { box-shadow: 0 0 0 2px var(--red), 0 0 18px rgba(244,63,94,0.35); }
+    50%       { box-shadow: 0 0 0 4px rgba(244,63,94,0.2), 0 0 32px rgba(244,63,94,0.55); }
+  }
 }
 
 /* ══════════════════════════════════════════
@@ -2616,15 +2618,23 @@ init();
   function dismiss() {
     if (dismissed) return;
     dismissed = true;
+    // Desktop: fade out overlay
     overlay.classList.remove('visible');
     overlay.classList.add('fading');
     setTimeout(() => overlay.remove(), 450);
+    // Mobile: remove pulsing glow from eq-wrap
+    eqWrap.classList.remove('onboard-mobile-glow');
   }
 
   // Wait for layout to settle before positioning and showing
   setTimeout(() => {
-    position();
-    requestAnimationFrame(() => overlay.classList.add('visible'));
+    if (isMobile()) {
+      // On mobile: pulse the eq-wrap directly instead of overlay
+      eqWrap.classList.add('onboard-mobile-glow');
+    } else {
+      position();
+      requestAnimationFrame(() => overlay.classList.add('visible'));
+    }
   }, 120);
 
   // Dismiss on any interaction with the equation box
@@ -2633,7 +2643,7 @@ init();
   eqInput.addEventListener('focus',   dismiss, { once: true });
 
   // Auto-dismiss: 3 s on mobile, 10 s on desktop
-  setTimeout(dismiss, window.innerWidth <= 900 ? 3000 : 10000);
+  setTimeout(dismiss, isMobile() ? 3000 : 10000);
 })();
 </script>
 </body>
