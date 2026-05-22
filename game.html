@@ -386,7 +386,11 @@ body {
   transform: translateY(-1px);
 }
 #next-btn:active { transform: translateY(1px) scale(0.98); }
-#next-btn.visible { display: block; }
+#next-btn.visible {
+  display: block;
+  position: sticky;
+  bottom: 14px;
+}
 
 /* Hide telemetry and log */
 #telem { display: none; }
@@ -1826,16 +1830,23 @@ function checkStarCollections() {
 
 let bonusAnswered = false;
 
+function showNextBtn() {
+  const btn = document.getElementById('next-btn');
+  btn.classList.add('visible');
+  btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 function showLevelComplete() {
   document.getElementById('win-flash').classList.add('show');
   document.getElementById('win-sub').textContent =
     levelIdx + 1 < LEVELS.length ? 'Hit next to keep going' : 'Every ocean cleared';
 
   const lv = LEVELS[levelIdx];
-  if (lv.bonusQ && !bonusAnswered) {
+  const bonusPanelVisible = window.innerWidth > 900;
+  if (lv.bonusQ && !bonusAnswered && bonusPanelVisible) {
     showBonusQ(lv.bonusQ);
   } else {
-    document.getElementById('next-btn').classList.add('visible');
+    showNextBtn();
   }
 }
 
@@ -1886,9 +1897,7 @@ function handleBonusAnswer(chosen, bq) {
   // If they answered the bonus early (before solving), the next-btn
   // will appear via showLevelComplete() once they clear all hoops.
   if (levelComplete) {
-    setTimeout(() => {
-      document.getElementById('next-btn').classList.add('visible');
-    }, correct ? 800 : 1400);
+    setTimeout(() => showNextBtn(), correct ? 800 : 1400);
   }
 }
 
