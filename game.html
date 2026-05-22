@@ -1842,11 +1842,10 @@ function showLevelComplete() {
     levelIdx + 1 < LEVELS.length ? 'Hit next to keep going' : 'Every ocean cleared';
 
   const lv = LEVELS[levelIdx];
-  const bonusPanelVisible = window.innerWidth > 900;
-  if (lv.bonusQ && !bonusAnswered && bonusPanelVisible) {
+  // Always show Next button — bonus question is optional
+  showNextBtn();
+  if (lv.bonusQ && !bonusAnswered && window.innerWidth > 900) {
     showBonusQ(lv.bonusQ);
-  } else {
-    showNextBtn();
   }
 }
 
