@@ -1297,14 +1297,19 @@ const Y_MIN = -12, Y_MAX = 12;
 // Canvas margins (pixels) for axis labels
 const ML = 52, MB = 36, MT = 16, MR = 16;
 
-let GW, GH; // game area width/height in pixels
+let GW, GH;   // game area in logical (CSS) pixels
+let CW, CH;   // full canvas in logical pixels
 
 function resize() {
   const panel = document.getElementById('right-panel');
-  canvas.width  = panel.clientWidth;
-  canvas.height = panel.clientHeight;
-  GW = canvas.width  - ML - MR;
-  GH = canvas.height - MT - MB;
+  const dpr   = window.devicePixelRatio || 1;
+  CW = panel.clientWidth;
+  CH = panel.clientHeight;
+  canvas.width  = Math.round(CW * dpr);
+  canvas.height = Math.round(CH * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // scale once; all drawing uses CSS px
+  GW = CW - ML - MR;
+  GH = CH - MT - MB;
 }
 window.addEventListener('resize', () => { resize(); });
 resize();
@@ -1837,7 +1842,7 @@ function handleBonusAnswer(chosen, bq) {
 // RENDERING
 // ═══════════════════════════════════════
 function render() {
-  const W = canvas.width, H = canvas.height;
+  const W = CW, H = CH;
 
   // Ocean gradient — light at surface, dark in the deep
   const ocean = ctx.createLinearGradient(0, 0, 0, H);
@@ -2496,11 +2501,11 @@ init();
     setTimeout(() => overlay.remove(), 450);
   }
 
-  // Position immediately, then show on next paint
-  position();
-  requestAnimationFrame(() => {
+  // Wait for layout to settle before positioning and showing
+  setTimeout(() => {
+    position();
     requestAnimationFrame(() => overlay.classList.add('visible'));
-  });
+  }, 120);
 
   // Dismiss on any interaction with the equation box
   eqWrap.addEventListener('click',   dismiss, { once: true });
@@ -2509,9 +2514,6 @@ init();
 
   // Auto-dismiss after 10 s
   setTimeout(dismiss, 10000);
-
-  // Reposition if window resizes
-  window.addEventListener('resize', position);
 })();
 </script>
 </body>
