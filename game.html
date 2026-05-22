@@ -392,6 +392,22 @@ body {
   bottom: 14px;
 }
 
+/* Mobile disclaimer — hidden on desktop, shown on mobile via media query */
+#mobile-disclaimer {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  opacity: 0.75;
+}
+
 /* Hide telemetry and log */
 #telem { display: none; }
 #log-wrap { display: none; }
@@ -714,6 +730,9 @@ body {
   /* Hide the top accent line — saves 2px and visual noise */
   #left-panel::before { display: none; }
 
+  /* Show mobile disclaimer */
+  #mobile-disclaimer { display: flex; }
+
   /* Collapse header — hide title + rule to save vertical space */
   .panel-title { display: none; }
   .rule        { display: none; }
@@ -814,6 +833,10 @@ body {
 
 <!-- LEFT PANEL -->
 <div id="left-panel">
+  <div id="mobile-disclaimer">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    Best played on desktop
+  </div>
   <a class="back-btn" href="/">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     All games
