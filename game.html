@@ -739,17 +739,16 @@ body {
   #onboard-ring    { display: none !important; }
   #onboard-tip {
     position: fixed;
-    top: 50dvh;
+    top: 25dvh;
     left: 50%;
     transform: translateX(-50%) translateY(-50%) !important;
     animation: none !important;
     white-space: nowrap;
     z-index: 500;
   }
-  @keyframes onboard-float { 0%,100%,50% { transform: translateX(-50%) translateY(-50%); } }
   #onboard-dismiss {
     bottom: auto;
-    top: calc(50dvh + 32px);
+    top: calc(25dvh + 32px);
   }
 }
 
@@ -1318,20 +1317,22 @@ const Y_MIN = -12, Y_MAX = 12;
 const ML = 52, MB = 36, MT = 16, MR = 16;
 
 let GW, GH;   // game area in logical (CSS) pixels
-let CW, CH;   // full canvas in logical pixels
+let CW, CH;   // full canvas in logical (CSS) pixels
+let DPR = 1;  // device pixel ratio — set in resize, applied in render
 
 function resize() {
   const panel = document.getElementById('right-panel');
-  const dpr   = window.devicePixelRatio || 1;
-  CW = panel.clientWidth;
-  CH = panel.clientHeight;
-  canvas.width  = Math.round(CW * dpr);
-  canvas.height = Math.round(CH * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // scale once; all drawing uses CSS px
+  DPR = window.devicePixelRatio || 1;
+  CW  = panel.clientWidth  || 300;
+  CH  = panel.clientHeight || 300;
+  canvas.width  = Math.round(CW * DPR);
+  canvas.height = Math.round(CH * DPR);
+  // Transform is applied at the top of render(), not here,
+  // so it survives any mid-frame resize() call.
   GW = CW - ML - MR;
   GH = CH - MT - MB;
 }
-window.addEventListener('resize', () => { resize(); });
+window.addEventListener('resize', resize);
 resize();
 
 function m2c(mx, my) {
@@ -1876,6 +1877,8 @@ function handleBonusAnswer(chosen, bq) {
 // RENDERING
 // ═══════════════════════════════════════
 function render() {
+  // Re-apply DPR scale every frame — survives canvas resets and save/restore mismatches
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   const W = CW, H = CH;
 
   // Ocean gradient — light at surface, dark in the deep
