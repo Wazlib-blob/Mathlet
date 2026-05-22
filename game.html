@@ -2593,7 +2593,11 @@ function loop(ts) {
       animX = X_MAX;
 
       if (!levelComplete) {
-        // Not all stars collected — reset for retry
+        // Not all stars collected in this single run — reset ALL stars.
+        // Both stars must be hit in the same pass; partial credit doesn't carry over.
+        stars.forEach(s => { s.collected = false; s.flash = 0; });
+        renderStarPips();
+
         setTimeout(() => {
           if (!levelComplete) {
             document.getElementById('launch-prompt').classList.remove('hide');
