@@ -474,7 +474,24 @@ body {
   transition: opacity 0.5s cubic-bezier(0.16,1,0.3,1);
   background: radial-gradient(ellipse at center, rgba(255,215,0,0.12) 0%, rgba(255,215,0,0.03) 45%, transparent 70%);
 }
-#win-flash.show { opacity: 1; }
+#win-flash.show { opacity: 1; pointer-events: auto; }
+#canvas-next-btn {
+  display: none;
+  margin-top: 22px;
+  background: var(--gold);
+  color: #05080f;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px; font-weight: 900;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  padding: 12px 34px;
+  border: none; border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 0 32px #FFD70055, 0 4px 16px rgba(0,0,0,0.4);
+  transition: transform 0.12s ease, box-shadow 0.18s ease;
+}
+#canvas-next-btn:hover  { transform: translateY(-2px); box-shadow: 0 0 48px #FFD70090, 0 6px 20px rgba(0,0,0,0.4); }
+#canvas-next-btn:active { transform: translateY(1px) scale(0.98); }
+#win-flash.show #canvas-next-btn { display: block; }
 .win-text {
   font-family: 'Nunito', sans-serif;
   font-size: 30px; font-weight: 900; letter-spacing: 6px;
@@ -506,7 +523,7 @@ body {
   backdrop-filter: blur(8px); z-index: 20;
 }
 #world-error.show { opacity: 1; }
-#world-error-icon { font-size: 52px; margin-bottom: 16px; line-height: 1; }
+#world-error-icon { margin-bottom: 16px; line-height: 1; opacity: 0.8; }
 #world-error-title {
   font-family: 'Nunito', sans-serif; font-size: 28px; font-weight: 900;
   color: var(--red); text-align: center; letter-spacing: 1.5px;
@@ -779,6 +796,8 @@ body {
     letter-spacing: 2px;
     margin-top: 6px;
   }
+  /* Canvas Next button hidden on mobile — fixed #next-btn at bottom handles it */
+  #canvas-next-btn { display: none !important; }
   /* Push win flash up so it clears the x-axis number row */
   #win-flash {
     justify-content: flex-start;
@@ -893,7 +912,7 @@ body {
   <div id="superscript-btns">
     <button class="sup-btn" onclick="insertAtCursor('^2')">x²</button>
     <button class="sup-btn" onclick="insertAtCursor('^3')">x³</button>
-    <button class="sup-btn" onclick="insertAtCursor('^')">xⁿ</button>
+    <button class="sup-btn" onclick="insertSupN()">xⁿ</button>
     <button class="sup-btn" onclick="insertAtCursor('(')">(</button>
     <button class="sup-btn" onclick="insertAtCursor(')')">)</button>
   </div>
@@ -954,13 +973,14 @@ body {
   <div id="win-flash">
     <div class="win-text">YOU NAILED IT</div>
     <div class="win-sub" id="win-sub">All hoops cleared</div>
+    <button id="canvas-next-btn" onclick="nextLevel()">Next Level →</button>
   </div>
 
   <div id="err-flash"></div>
 
   <div id="world-error">
     <div id="world-error-icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
     </div>
     <div id="world-error-title"></div>
     <div id="world-error-type"></div>
@@ -1715,6 +1735,17 @@ function insertAtCursor(text) {
   el.dispatchEvent(new Event('input'));
 }
 
+// xⁿ button: inserts "x^" when input is empty/cursor at start,
+// otherwise inserts "^" so the user types the exponent after an existing term
+function insertSupN() {
+  const el  = document.getElementById('eq-input');
+  const pos = el.selectionStart;
+  // If nothing before cursor, give them the full "x^" starter
+  const before = el.value.slice(0, pos);
+  const insert = before.trim() === '' ? 'x^' : '^';
+  insertAtCursor(insert);
+}
+
 // ═══════════════════════════════════════
 // EQUATION LOGIC
 // ═══════════════════════════════════════
@@ -1887,9 +1918,22 @@ function showNextBtn() {
 }
 
 function showLevelComplete() {
+  const isLast = levelIdx + 1 >= LEVELS.length;
+
   document.getElementById('win-flash').classList.add('show');
+  document.getElementById('launch-prompt').classList.add('hide');
   document.getElementById('win-sub').textContent =
-    levelIdx + 1 < LEVELS.length ? 'Hit next to keep going' : 'Every ocean cleared';
+    isLast ? 'Every ocean cleared' : 'Hit next to keep going';
+
+  // Canvas button — hide on last level (no next to go to)
+  const canvasBtn = document.getElementById('canvas-next-btn');
+  if (isLast) {
+    canvasBtn.textContent = 'Play Again';
+    canvasBtn.onclick = () => window.location.href = '/';
+  } else {
+    canvasBtn.textContent = 'Next Level →';
+    canvasBtn.onclick = nextLevel;
+  }
 
   const lv = LEVELS[levelIdx];
   // Always show Next button — bonus question is optional
