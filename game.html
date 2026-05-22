@@ -241,6 +241,29 @@ body {
   box-shadow: inset 0 0 0 1px #FFD70038;
 }
 
+/* ── TARGET COORDS (mobile pill) ── */
+#target-coords {
+  display: none; /* hidden on desktop; shown on mobile via media query */
+}
+#target-coords:not(:empty) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.target-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,215,0,0.08);
+  border: 1px solid rgba(255,215,0,0.28);
+  border-radius: 20px;
+  padding: 4px 10px 4px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 700;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.target-pill svg { opacity: 0.85; flex-shrink: 0; }
+
 /* ── LEVEL INFO ── */
 #level-bar {
   background: var(--surface);
@@ -701,6 +724,9 @@ body {
   #world-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .world-tab  { min-width: 52px; padding: 7px 3px; }
 
+  /* Target coords pill — visible on mobile */
+  #target-coords:not(:empty) { display: flex !important; }
+
   /* Hide verbose content to save vertical space */
   #level-desc      { display: none !important; }
   #level-hint      { display: none !important; }
@@ -813,6 +839,7 @@ body {
     <div id="level-title">WORLD 1-1</div>
     <div id="level-desc">Loading...</div>
     <div id="level-hint"></div>
+    <div id="target-coords"></div>
     <div id="stars-row"></div>
     <button id="hint-btn" onclick="toggleHint()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-1px" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
@@ -1423,6 +1450,7 @@ function loadLevel(idx) {
   document.getElementById('banner-title').textContent = lv.title;
 
   renderStarPips();
+  renderTargetCoords(lv.stars);
   // Set equation input
   eqInput.value = lv.startEq;
   eqInput.classList.remove('error');
@@ -1485,6 +1513,19 @@ function renderStarPips() {
   });
 }
 
+
+function renderTargetCoords(starList) {
+  const el = document.getElementById('target-coords');
+  if (!el) return;
+  el.innerHTML = starList.map(s =>
+    `<span class="target-pill">
+      <svg width="11" height="11" viewBox="0 0 20 20" fill="#FFD700">
+        <polygon points="10,1 12.9,7 19.5,7.6 14.8,12.1 16.2,18.5 10,15.4 3.8,18.5 5.2,12.1 0.5,7.6 7.1,7"/>
+      </svg>
+      (${s.x}, ${s.y})
+    </span>`
+  ).join('');
+}
 
 function nextLevel() {
   if (levelIdx + 1 < LEVELS.length) {
@@ -1953,14 +1994,17 @@ function drawGrid() {
     ctx.fillRect(ML, zeroY, GW, floorY - zeroY);
   }
 
-  // X-axis labels
+  // X-axis labels — sit just below the y=0 line
+  const [, axY] = m2c(0, 0);
   ctx.font = '700 13px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
   for (let x = 2; x <= X_MAX; x += 2) {
     const [cx] = m2c(x, 0);
     const lbl = String(x);
     const tw = ctx.measureText(lbl).width;
-    const ph = 20, py = MT + GH - ph - 6;
+    const ph = 20;
+    // clamp so labels don't overflow the bottom or top of the canvas
+    const py = Math.min(Math.max(axY + 4, MT + 2), MT + GH - ph - 2);
     const px = cx - tw/2 - 7, pw = tw + 14;
     ctx.fillStyle = 'rgba(3,20,42,0.75)';
     ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 5); ctx.fill();
