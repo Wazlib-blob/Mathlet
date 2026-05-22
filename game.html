@@ -1997,8 +1997,7 @@ function drawGrid() {
     ctx.fillRect(ML, zeroY, GW, floorY - zeroY);
   }
 
-  // X-axis labels — sit just below the y=0 line
-  const [, axY] = m2c(0, 0);
+  // X-axis labels — sit just below the y=0 line (axY already declared above)
   ctx.font = '700 13px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
   for (let x = 2; x <= X_MAX; x += 2) {
