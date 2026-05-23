@@ -386,11 +386,11 @@ body {
   transform: translateY(-1px);
 }
 #next-btn:active { transform: translateY(1px) scale(0.98); }
-#next-btn.visible {
-  display: block;
-  position: sticky;
-  bottom: 14px;
-}
+/* Desktop: #next-btn hidden — canvas overlay is the only CTA */
+#next-btn.visible { display: none; }
+
+/* Mobile replay button hidden globally; shown only on mobile via media query */
+#mobile-replay-btn { display: none; }
 
 /* Mobile disclaimer — hidden on desktop, shown on mobile via media query */
 #mobile-disclaimer {
@@ -845,6 +845,7 @@ body {
 
   /* Next button — fixed to bottom of screen so it's always tappable */
   #next-btn.visible {
+    display: block;
     position: fixed;
     bottom: 0; left: 0; right: 0;
     border-radius: 0;
@@ -991,7 +992,7 @@ body {
   </div>
 
   <button id="next-btn" onclick="nextLevel()">Next Level →</button>
-  <button id="mobile-replay-btn" onclick="replayLevel()">Try a different equation</button>
+  <button id="mobile-replay-btn" onclick="replayLevel()">Play again</button>
 </div>
 
 <!-- RIGHT PANEL -->
@@ -1009,7 +1010,7 @@ body {
     <div class="win-text">YOU NAILED IT</div>
     <div class="win-sub" id="win-sub">All hoops cleared</div>
     <div id="canvas-btn-row">
-      <button id="canvas-replay-btn" onclick="replayLevel()">Try another equation</button>
+      <button id="canvas-replay-btn" onclick="replayLevel()">Play again</button>
       <button id="canvas-next-btn" onclick="nextLevel()">Next Level →</button>
     </div>
   </div>
