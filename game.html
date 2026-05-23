@@ -1491,7 +1491,8 @@ function updateScoreDisplay() {
 
 function initScoreDisplay() {
   const el = document.getElementById('score-total');
-  if (el) el.textContent = LEVELS.length;
+  // 1 pt per level solved + 1 pt per correct bonus = 2 × number of levels
+  if (el) el.textContent = LEVELS.length * 2;
   updateScoreDisplay();
 }
 
@@ -1997,6 +1998,10 @@ function replayLevel() {
 
 function showLevelComplete() {
   const isLast = levelIdx + 1 >= LEVELS.length;
+
+  // Award 1 point for solving this level
+  score++;
+  updateScoreDisplay();
 
   document.getElementById('win-flash').classList.add('show');
   document.getElementById('launch-prompt').classList.add('hide');
