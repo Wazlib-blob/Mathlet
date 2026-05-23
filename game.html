@@ -948,15 +948,6 @@ body {
   <div id="level-hint"   style="display:none"></div>
   <button id="hint-btn"  style="display:none" onclick="toggleHint()"></button>
 
-  <div id="score-panel">
-    <div id="score-eyebrow">POINTS</div>
-    <div id="score-display">
-      <span id="score-current">0</span><span id="score-denom"> / <span id="score-total">21</span></span>
-    </div>
-    <div id="target-coords"></div>
-    <div id="stars-row"></div>
-  </div>
-
   <div id="tangent-section">
     <button id="tangent-btn" onclick="toggleTangentMode()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-1px" aria-hidden="true"><path d="M3 21L21 3M3 21l6-2M3 21l2-6"/></svg>
@@ -967,12 +958,21 @@ body {
 
   <div id="bonus-panel">
     <div class="bonus-header">
-      <span class="bonus-label">Quick Question</span>
+      <span class="bonus-label">Bonus Question</span>
       <span class="bonus-pts">+1 point</span>
     </div>
     <p id="bonus-q"></p>
     <div id="bonus-choices"></div>
     <div id="bonus-result"></div>
+  </div>
+
+  <div id="score-panel">
+    <div id="score-eyebrow">POINTS</div>
+    <div id="score-display">
+      <span id="score-current">0</span><span id="score-denom"> / <span id="score-total">21</span></span>
+    </div>
+    <div id="target-coords"></div>
+    <div id="stars-row"></div>
   </div>
 
   <button id="next-btn" onclick="nextLevel()">Next Level →</button>
