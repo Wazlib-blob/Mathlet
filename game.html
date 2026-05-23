@@ -796,23 +796,45 @@ body {
   /* Canvas buttons hidden on mobile — fixed #next-btn at bottom handles navigation */
   #canvas-btn-row  { display: none !important; }
 
-  /* Mobile replay link — sits just above the fixed Next Level button */
+  /* —— Shared mobile CTA bar style —— */
+  #next-btn.visible,
+  #mobile-replay-btn.visible {
+    display: block;
+    position: fixed;
+    left: 0; right: 0; width: 100%;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 900;
+    letter-spacing: 2px; text-transform: uppercase;
+    text-align: center;
+    padding: 16px;
+    border-radius: 0;
+    border-left: none; border-right: none; border-bottom: none;
+    cursor: pointer;
+  }
+
+  /* Next Level — primary action, solid gold, bottom of screen */
+  #next-btn.visible {
+    bottom: 0;
+    background: var(--gold);
+    color: #05080f;
+    border: none;
+    z-index: 300;
+  }
+
+  /* Play again — secondary, ghost gold, sits directly above */
   #mobile-replay-btn {
     display: none;
     position: fixed;
-    bottom: 53px; left: 0; right: 0;
-    text-align: center;
-    font-family: 'Nunito Sans', sans-serif;
-    font-size: 12px; font-weight: 700;
-    color: var(--text-dim);
-    background: var(--panel);
-    border-top: 1px solid var(--border);
-    padding: 10px;
-    cursor: pointer;
+    bottom: 55px; left: 0; right: 0;
     z-index: 299;
-    letter-spacing: 0.3px;
   }
-  #mobile-replay-btn.visible { display: block; }
+  #mobile-replay-btn.visible {
+    background: var(--panel);
+    color: var(--gold);
+    border-top: 1px solid rgba(255,215,0,0.3);
+    border-bottom: 1px solid rgba(255,215,0,0.3);
+  }
+
   /* Push win flash up so it clears the x-axis number row */
   #win-flash {
     justify-content: flex-start;
@@ -823,18 +845,6 @@ body {
   #level-banner { padding: 5px 14px; top: 8px; }
   #banner-world { font-size: 8px; letter-spacing: 1.5px; }
   #banner-title { font-size: 11px; letter-spacing: 1.5px; }
-
-  /* Next button — fixed to bottom of screen so it's always tappable */
-  #next-btn.visible {
-    display: block;
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    border-radius: 0;
-    border-left: none; border-right: none; border-bottom: none;
-    padding: 16px;
-    font-size: 15px;
-    z-index: 300;
-  }
 
   /* Onboarding — hide overlay entirely; pulse the eq-wrap directly */
   #onboard-overlay { display: none !important; }
