@@ -491,7 +491,20 @@ body {
 }
 #canvas-next-btn:hover  { transform: translateY(-2px); box-shadow: 0 0 48px #FFD70090, 0 6px 20px rgba(0,0,0,0.4); }
 #canvas-next-btn:active { transform: translateY(1px) scale(0.98); }
-#win-flash.show #canvas-next-btn { display: block; }
+#canvas-replay-btn {
+  background: transparent;
+  color: var(--text);
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 8px 22px;
+  border: 1px solid var(--border);
+  border-radius: 8px; cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.18s, border-color 0.18s;
+}
+#canvas-replay-btn:hover  { opacity: 1; border-color: var(--text-dim); }
+#canvas-replay-btn:active { transform: scale(0.98); }
 .win-text {
   font-family: 'Nunito', sans-serif;
   font-size: 30px; font-weight: 900; letter-spacing: 6px;
@@ -502,9 +515,17 @@ body {
 .win-sub {
   font-family: 'Nunito', sans-serif;
   font-size: 11px; letter-spacing: 4px; font-weight: 800;
-  color: var(--text-dim); margin-top: 12px;
+  color: var(--text); opacity: 0.75; margin-top: 12px;
   text-transform: uppercase;
 }
+#canvas-btn-row {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+#win-flash.show #canvas-btn-row { display: flex; }
 
 /* Error flash */
 #err-flash {
@@ -796,8 +817,26 @@ body {
     letter-spacing: 2px;
     margin-top: 6px;
   }
-  /* Canvas Next button hidden on mobile — fixed #next-btn at bottom handles it */
-  #canvas-next-btn { display: none !important; }
+  /* Canvas buttons hidden on mobile — fixed #next-btn at bottom handles navigation */
+  #canvas-btn-row  { display: none !important; }
+
+  /* Mobile replay link — sits just above the fixed Next Level button */
+  #mobile-replay-btn {
+    display: none;
+    position: fixed;
+    bottom: 53px; left: 0; right: 0;
+    text-align: center;
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 12px; font-weight: 700;
+    color: var(--text-dim);
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 10px;
+    cursor: pointer;
+    z-index: 299;
+    letter-spacing: 0.3px;
+  }
+  #mobile-replay-btn.visible { display: block; }
   /* Push win flash up so it clears the x-axis number row */
   #win-flash {
     justify-content: flex-start;
@@ -957,6 +996,7 @@ body {
   </div>
 
   <button id="next-btn" onclick="nextLevel()">Next Level →</button>
+  <button id="mobile-replay-btn" onclick="replayLevel()">Try a different equation</button>
 </div>
 
 <!-- RIGHT PANEL -->
@@ -973,7 +1013,10 @@ body {
   <div id="win-flash">
     <div class="win-text">YOU NAILED IT</div>
     <div class="win-sub" id="win-sub">All hoops cleared</div>
-    <button id="canvas-next-btn" onclick="nextLevel()">Next Level →</button>
+    <div id="canvas-btn-row">
+      <button id="canvas-replay-btn" onclick="replayLevel()">Try another equation</button>
+      <button id="canvas-next-btn" onclick="nextLevel()">Next Level →</button>
+    </div>
   </div>
 
   <div id="err-flash"></div>
@@ -1552,6 +1595,7 @@ function loadLevel(idx) {
   applyEquation(lv.startEq, false); // load without auto-launch
 
   document.getElementById('next-btn').classList.remove('visible');
+  document.getElementById('mobile-replay-btn').classList.remove('visible');
   document.getElementById('win-flash').classList.remove('show');
   document.getElementById('launch-prompt').classList.remove('hide');
   document.getElementById('bonus-panel').classList.remove('show');
@@ -1915,6 +1959,31 @@ function showNextBtn() {
   const btn = document.getElementById('next-btn');
   btn.classList.add('visible');
   btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  // Mobile: show replay link above the fixed next button
+  document.getElementById('mobile-replay-btn').classList.add('visible');
+}
+
+function replayLevel() {
+  // Hide win state
+  document.getElementById('win-flash').classList.remove('show');
+  document.getElementById('next-btn').classList.remove('visible');
+  document.getElementById('mobile-replay-btn').classList.remove('visible');
+
+  // Reset level completion & stars — same as failing a run
+  levelComplete = false;
+  stars.forEach(s => { s.collected = false; s.flash = 0; });
+  renderStarPips();
+
+  // Reset animation
+  animRunning  = false;
+  animX        = LEVELS[levelIdx].startX ?? 0;
+  prevAnimX    = animX;
+  ballAngle    = 0;
+  particles    = [];
+
+  // Show the prompt and focus the input so they can type a new equation
+  document.getElementById('launch-prompt').classList.remove('hide');
+  document.getElementById('eq-input').focus();
 }
 
 function showLevelComplete() {
