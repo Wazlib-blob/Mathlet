@@ -771,6 +771,14 @@ body {
   /* Target coords pill — visible on mobile */
   #target-coords:not(:empty) { display: flex !important; }
 
+  /* Score panel — compact strip on mobile (no giant 48px number) */
+  #score-panel { flex-direction: row; align-items: center; gap: 8px; padding: 2px 0; }
+  #score-eyebrow { font-size: 8px; letter-spacing: 2px; }
+  #score-current { font-size: 18px; text-shadow: none; }
+  #score-denom { font-size: 13px; margin-left: 2px; }
+  #stars-row { margin-top: 0; }
+  .star-pip { width: 11px; height: 11px; }
+
   /* Hide verbose content */
   #level-title     { display: none !important; }  /* redundant — world shown in tabs */
   #level-desc      { display: none !important; }
