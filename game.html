@@ -1947,7 +1947,7 @@ function checkStarCollections() {
     if (!s.collected) allCollected = false;
   });
 
-  if (allCollected && animRunning) {
+  if (allCollected && animRunning && !levelComplete) {
     levelComplete = true;
     setTimeout(showLevelComplete, 600);
   }
