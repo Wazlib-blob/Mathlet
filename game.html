@@ -1977,9 +1977,19 @@ function replayLevel() {
   ballAngle    = 0;
   particles    = [];
 
+  // Clear the equation so the previous (correct) answer can't auto-refire
+  clearTimeout(launchDelay);
+  eqFn   = null;
+  eqValid = false;
+  const input = document.getElementById('eq-input');
+  input.value = '';
+  renderEqDisplay('');
+  document.getElementById('eq-status').textContent = '';
+  document.getElementById('eq-wrap').classList.remove('error');
+
   // Show the prompt and focus the input so they can type a new equation
   document.getElementById('launch-prompt').classList.remove('hide');
-  document.getElementById('eq-input').focus();
+  input.focus();
 }
 
 function showLevelComplete() {
