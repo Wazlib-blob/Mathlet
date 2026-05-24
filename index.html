@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data:; connect-src 'none';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://server.fillout.com; style-src 'unsafe-inline' https://fonts.googleapis.com https://server.fillout.com; font-src https://fonts.gstatic.com; img-src data: https://server.fillout.com; frame-src https://server.fillout.com; connect-src https://server.fillout.com; worker-src blob:;">
 <title>Mathlet — Maths games that hit different</title>
 <meta name="description" content="Free browser maths games. Plot curves, guide sharks, beat levels. No sign-up needed.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1324,5 +1324,6 @@ document.querySelectorAll('.game-card').forEach(el => obs.observe(el));
 })();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
+<div data-fillout-id="3W1GJdv1s2us" data-fillout-embed-type="popup" data-fillout-dynamic-resize data-fillout-inherit-parameters data-fillout-popup-size="medium"></div><script src="https://server.fillout.com/embed/v1/"></script>
 </body>
 </html>
