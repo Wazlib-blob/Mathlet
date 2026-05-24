@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data:; connect-src 'none';">
 <title>Mathlet — Maths games that hit different</title>
 <meta name="description" content="Free browser maths games. Plot curves, guide sharks, beat levels. No sign-up needed.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1322,5 +1323,6 @@ document.querySelectorAll('.game-card').forEach(el => obs.observe(el));
   setTimeout(tick, 2200);
 })();
 </script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

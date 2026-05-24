@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data:; connect-src 'none';">
 <title>Shark Equation — Math Game</title>
 <meta name="description" content="Guide a shark through the ocean by plotting the right equation. Learn linear, quadratic, power and exponential functions.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -269,6 +270,7 @@ body {
 #score-panel {
   display: flex; flex-direction: column; gap: 6px;
   padding: 4px 0;
+  align-items: center;
 }
 #score-eyebrow {
   font-family: 'JetBrains Mono', monospace;
@@ -1344,48 +1346,127 @@ const LEVELS = [
 ];
 
 // ═══════════════════════════════════════
-// EQUATION PARSER
+// EQUATION PARSER — safe AST evaluator; no new Function / eval
 // ═══════════════════════════════════════
+const _SAFE_CONSTS = { pi: Math.PI, e: Math.E };
+const _SAFE_FUNS   = { sqrt: Math.sqrt, abs: Math.abs, sin: Math.sin, cos: Math.cos, tan: Math.tan };
+
+function _tokenize(s) {
+  const toks = [];
+  let i = 0;
+  while (i < s.length) {
+    if (/\s/.test(s[i])) { i++; continue; }
+    if (/\d/.test(s[i]) || (s[i] === '.' && /\d/.test(s[i + 1] || ''))) {
+      let n = '';
+      while (i < s.length && (/\d/.test(s[i]) || s[i] === '.')) n += s[i++];
+      toks.push({ t: 'NUM', v: parseFloat(n) });
+    } else if (/[a-zA-Z]/.test(s[i])) {
+      let id = '';
+      while (i < s.length && /[a-zA-Z]/.test(s[i])) id += s[i++];
+      toks.push({ t: 'ID', v: id.toLowerCase() });
+    } else {
+      const map = { '+':'ADD', '-':'SUB', '*':'MUL', '/':'DIV', '^':'POW', '(':'LP', ')':'RP' };
+      const ch = s[i++];
+      if (!(ch in map)) throw new Error('bad char: ' + ch);
+      toks.push({ t: map[ch] });
+    }
+  }
+  toks.push({ t: 'EOF' });
+  return toks;
+}
+
+function _insertImplicitMul(toks) {
+  const ENDS   = new Set(['NUM', 'ID', 'RP']);
+  const STARTS = new Set(['NUM', 'ID', 'LP']);
+  const out = [];
+  for (let i = 0; i < toks.length; i++) {
+    out.push(toks[i]);
+    if (i + 1 < toks.length && ENDS.has(toks[i].t) && STARTS.has(toks[i + 1].t))
+      out.push({ t: 'MUL' });
+  }
+  return out;
+}
+
+function _buildAST(toks) {
+  let pos = 0;
+  const peek   = ()     => toks[pos];
+  const eat    = ()     => toks[pos++];
+  const expect = type   => { if (peek().t !== type) throw new Error('expected ' + type); return eat(); };
+
+  // Precedence (low → high): addSub → mulDiv → unary → power → primary
+  // Unary minus binds tighter than mul/div but lower than power, so
+  // -(x-4)^2 parses as -((x-4)^2), matching standard math convention.
+  function addSub() {
+    let node = mulDiv();
+    while (peek().t === 'ADD' || peek().t === 'SUB') {
+      const op = eat().t;
+      node = { op, l: node, r: mulDiv() };
+    }
+    return node;
+  }
+  function mulDiv() {
+    let node = unary();
+    while (peek().t === 'MUL' || peek().t === 'DIV') {
+      const op = eat().t;
+      node = { op, l: node, r: unary() };
+    }
+    return node;
+  }
+  function unary() {
+    if (peek().t === 'SUB') { eat(); return { op: 'NEG', v: power() }; }
+    if (peek().t === 'ADD') { eat(); return power(); }
+    return power();
+  }
+  function power() {
+    const base = primary();
+    if (peek().t === 'POW') { eat(); return { op: 'POW', l: base, r: unary() }; }
+    return base;
+  }
+  function primary() {
+    const t = peek();
+    if (t.t === 'NUM') { eat(); return { op: 'NUM', v: t.v }; }
+    if (t.t === 'ID') {
+      eat();
+      if (t.v === 'x')         return { op: 'X' };
+      if (t.v in _SAFE_CONSTS) return { op: 'NUM', v: _SAFE_CONSTS[t.v] };
+      if (t.v in _SAFE_FUNS)  { expect('LP'); const a = addSub(); expect('RP'); return { op: 'FN', fn: t.v, a }; }
+      throw new Error('unknown identifier: ' + t.v);
+    }
+    if (t.t === 'LP') { eat(); const node = addSub(); expect('RP'); return node; }
+    throw new Error('unexpected token: ' + t.t);
+  }
+
+  const ast = addSub();
+  if (peek().t !== 'EOF') throw new Error('trailing input');
+  return ast;
+}
+
+function _evalAST(node, x) {
+  switch (node.op) {
+    case 'NUM': return node.v;
+    case 'X':   return x;
+    case 'ADD': return _evalAST(node.l, x) + _evalAST(node.r, x);
+    case 'SUB': return _evalAST(node.l, x) - _evalAST(node.r, x);
+    case 'MUL': return _evalAST(node.l, x) * _evalAST(node.r, x);
+    case 'DIV': return _evalAST(node.l, x) / _evalAST(node.r, x);
+    case 'POW': return Math.pow(_evalAST(node.l, x), _evalAST(node.r, x));
+    case 'NEG': return -_evalAST(node.v, x);
+    case 'FN':  return _SAFE_FUNS[node.fn](_evalAST(node.a, x));
+    default:    throw new Error('unknown op: ' + node.op);
+  }
+}
+
 function parseRHS(rhs) {
   if (!rhs || !rhs.trim()) return { valid: false };
   try {
-    let s = rhs.trim();
-
-    // Convert ^ to Math.pow to avoid JS unary-minus-before-** SyntaxError.
-    // Handle three patterns in order:
-    //   (inner)^(exp)   → Math.pow((inner),(exp))
-    //   (inner)^digit   → Math.pow((inner),digit)
-    //   word^(exp)      → Math.pow(word,(exp))
-    //   word^digit      → Math.pow(word,digit)
-    // Apply repeatedly until no ^ remain.
-    let prev = '';
-    while (s !== prev) {
-      prev = s;
-      s = s.replace(/(\([^()]*\)|[\w.]+)\^\(([^()]*)\)/g, 'Math.pow($1,($2))');
-      s = s.replace(/(\([^()]*\)|[\w.]+)\^(\d+\.?\d*)/g,  'Math.pow($1,$2)');
-      s = s.replace(/(\([^()]*\)|[\w.]+)\^([\w]+)/g,      'Math.pow($1,$2)');
-    }
-
-    // Implicit multiplication
-    s = s.replace(/(\d)(x)/g, '$1*$2');
-    s = s.replace(/(\d)\(/g,  '$1*(');
-    s = s.replace(/\)\(/g,    ')*(');
-    s = s.replace(/\)(x)/g,   ')*$1');
-    s = s.replace(/(x)\(/g,   '$1*(');
-
-    // Named constants / functions
-    s = s.replace(/\bpi\b/gi,   'Math.PI');
-    s = s.replace(/\be\b/g,     'Math.E');
-    s = s.replace(/\bsqrt\b/gi, 'Math.sqrt');
-    s = s.replace(/\babs\b/gi,  'Math.abs');
-    s = s.replace(/\bsin\b/gi,  'Math.sin');
-    s = s.replace(/\bcos\b/gi,  'Math.cos');
-    s = s.replace(/\btan\b/gi,  'Math.tan');
-
-    const fn = new Function('x',
-      'try { var r = (' + s + '); return typeof r === "number" ? r : NaN; } catch(e) { return NaN; }'
-    );
-    // Smoke-test at several x values
+    const toks = _insertImplicitMul(_tokenize(rhs.trim()));
+    const ast  = _buildAST(toks);
+    const fn = x => {
+      try {
+        const v = _evalAST(ast, x);
+        return (isFinite(v) && !isNaN(v)) ? v : NaN;
+      } catch(e) { return NaN; }
+    };
     for (let tx = 0; tx <= 14; tx += 2) {
       if (typeof fn(tx) !== 'number') return { valid: false };
     }
@@ -1882,14 +1963,34 @@ function applyEquation(raw, autoLaunch = true) {
 function renderEqDisplay(raw) {
   const body = document.getElementById('eq-render-body');
   if (!body) return;
-  // Escape HTML, then convert ^(...) and ^word/digits to <sup>
-  let s = raw
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  // ^(expr) — parenthesised exponent
-  s = s.replace(/\^\(([^)]+)\)/g, '<sup>$1</sup>');
-  // ^digit(s) or ^letter(s)
-  s = s.replace(/\^([0-9a-zA-Z]+)/g, '<sup>$1</sup>');
-  body.innerHTML = s || '<span style="opacity:0.3">…</span>';
+  body.textContent = '';
+  if (!raw) {
+    const ph = document.createElement('span');
+    ph.style.opacity = '0.3';
+    ph.textContent = '…';
+    body.appendChild(ph);
+    return;
+  }
+  // Build DOM nodes — never sets innerHTML with user-supplied content
+  let i = 0;
+  while (i < raw.length) {
+    if (raw[i] === '^') {
+      i++;
+      let exp = '';
+      if (raw[i] === '(') {
+        i++;
+        while (i < raw.length && raw[i] !== ')') exp += raw[i++];
+        if (i < raw.length) i++;
+      } else {
+        while (i < raw.length && /[0-9a-zA-Z]/.test(raw[i])) exp += raw[i++];
+      }
+      if (exp) { const sup = document.createElement('sup'); sup.textContent = exp; body.appendChild(sup); }
+    } else {
+      let text = '';
+      while (i < raw.length && raw[i] !== '^') text += raw[i++];
+      if (text) body.appendChild(document.createTextNode(text));
+    }
+  }
 }
 
 function triggerEquationChange(raw) {
@@ -2798,5 +2899,6 @@ init();
   setTimeout(dismiss, isMobile() ? 3000 : 10000);
 })();
 </script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

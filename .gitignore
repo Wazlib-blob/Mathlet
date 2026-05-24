@@ -1,0 +1,16 @@
+# dependencies
+node_modules/
+
+# env files (may contain secrets)
+.env
+.env.local
+.env*.local
+
+# Vercel
+.vercel/
+
+# macOS
+.DS_Store
+
+# editor
+.claude/
