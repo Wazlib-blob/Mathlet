@@ -619,93 +619,136 @@ body {
 #bonus-result .result-line.bad { color: #f43f5e; }
 
 /* ── ONBOARDING INSTRUCTION FLOW ── */
+/* ── ONBOARDING OVERLAY ── */
 #onboard-overlay {
   position: fixed; inset: 0;
   z-index: 400;
-  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(4,8,15,0.82);
+  backdrop-filter: blur(6px);
   opacity: 0;
   transition: opacity 0.4s ease;
-}
-#onboard-overlay.visible { opacity: 1; }
-#onboard-overlay.fading  { opacity: 0; }
-
-/* Pulsing red highlight box around eq-wrap */
-#onboard-ring {
-  position: fixed;
-  border: 2px solid var(--red);
-  border-radius: 14px;
-  box-shadow:
-    0 0 0 4px rgba(244,63,94,0.12),
-    0 0 24px rgba(244,63,94,0.3);
+  /* pointer-events set via JS once visible */
   pointer-events: none;
-  animation: onboard-pulse 1.6s ease-in-out infinite;
 }
-@keyframes onboard-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 4px rgba(244,63,94,0.12), 0 0 24px rgba(244,63,94,0.3);
-    border-color: var(--red);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(244,63,94,0.04), 0 0 40px rgba(244,63,94,0.45);
-    border-color: #ff6b85;
-  }
-}
+#onboard-overlay.visible { opacity: 1; pointer-events: auto; }
+#onboard-overlay.fading  { opacity: 0; pointer-events: none; }
 
-/* Tooltip above the ring */
-#onboard-tip {
-  position: fixed;
-  background: rgba(5,8,15,0.96);
-  border: 1px solid var(--red);
-  border-radius: 10px;
-  padding: 10px 16px 12px;
-  pointer-events: none;
+/* Centred instruction card */
+#onboard-card {
+  background: var(--panel);
+  border: 1px solid rgba(255,215,0,0.28);
+  border-radius: 18px;
+  padding: 32px 36px 28px;
+  max-width: 420px;
+  width: calc(100% - 40px);
   text-align: center;
-  box-shadow: 0 4px 24px rgba(244,63,94,0.2);
-  backdrop-filter: blur(8px);
-  transform: translateX(-50%);
-  animation: onboard-float 2s ease-in-out infinite;
+  box-shadow:
+    0 0 0 1px rgba(255,215,0,0.06),
+    0 24px 64px rgba(0,0,0,0.6),
+    0 0 60px rgba(255,215,0,0.06);
+  animation: onboard-float 3s ease-in-out infinite;
 }
 @keyframes onboard-float {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50%       { transform: translateX(-50%) translateY(-4px); }
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
 }
-#onboard-tip-label {
+
+#onboard-shark-icon {
+  display: flex; justify-content: center;
+  margin-bottom: 14px;
+  filter: drop-shadow(0 0 12px #FFD70060);
+}
+
+#onboard-eyebrow {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px; font-weight: 700;
-  letter-spacing: 2.5px; text-transform: uppercase;
-  color: var(--red);
-  margin-bottom: 4px;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 10px;
+  opacity: 0.85;
 }
-#onboard-tip-text {
+
+#onboard-title {
   font-family: 'Nunito', sans-serif;
-  font-size: 13px; font-weight: 800;
+  font-size: 19px; font-weight: 900;
+  color: var(--text);
+  line-height: 1.35;
+  letter-spacing: -0.3px;
+  margin-bottom: 24px;
+}
+
+/* Step list */
+#onboard-steps {
+  display: flex; flex-direction: column; gap: 12px;
+  text-align: left;
+  margin-bottom: 26px;
+}
+.onboard-step {
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.onboard-step-num {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: rgba(255,215,0,0.12);
+  border: 1px solid rgba(255,215,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  color: var(--gold);
+  margin-top: 1px;
+}
+.onboard-step-body { flex: 1; }
+.onboard-step-label {
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px; font-weight: 700;
   color: var(--text);
   line-height: 1.4;
 }
-/* Animated chevron below tooltip */
-#onboard-chevron {
-  display: block;
-  margin: 8px auto 0;
-  width: 18px; height: 18px;
-  animation: onboard-chevron-bob 1.2s ease-in-out infinite;
+.onboard-step-eg {
+  margin-top: 3px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text-dim);
 }
-@keyframes onboard-chevron-bob {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(5px); }
+.onboard-step-eg code {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--gold);
+  background: rgba(255,215,0,0.08);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+.onboard-star {
+  color: var(--gold);
 }
 
-/* Dismiss hint at bottom */
-#onboard-dismiss {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+/* CTA button */
+#onboard-btn {
+  display: block; width: 100%;
+  background: var(--gold);
+  color: #04080f;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px; font-weight: 900;
+  letter-spacing: 0.2px;
+  padding: 13px 24px;
+  border: none; border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 20px rgba(255,215,0,0.2);
+  margin-bottom: 12px;
+}
+#onboard-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(255,215,0,0.32); }
+#onboard-btn:active { transform: scale(0.98); }
+
+#onboard-skip {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px; font-weight: 700;
   letter-spacing: 2px; text-transform: uppercase;
-  color: rgba(90,127,168,0.5);
-  pointer-events: none;
+  color: rgba(90,127,168,0.45);
+  cursor: pointer;
 }
+#onboard-skip:hover { color: rgba(90,127,168,0.7); }
 
 /* ══════════════════════════════════════════
    RESPONSIVE — TABLET + MOBILE (≤ 900px)
@@ -856,20 +899,13 @@ body {
   #banner-world { font-size: 8px; letter-spacing: 1.5px; }
   #banner-title { font-size: 11px; letter-spacing: 1.5px; }
 
-  /* Onboarding — hide overlay entirely; pulse the eq-wrap directly */
-  #onboard-overlay { display: none !important; }
-
-  /* Pulsing red glow on eq-wrap during onboarding on mobile */
-  #eq-wrap.onboard-mobile-glow {
-    box-shadow:
-      0 0 0 2px var(--red),
-      0 0 18px rgba(244,63,94,0.35);
-    animation: eq-mobile-pulse 1.6s ease-in-out infinite;
+  /* Onboarding — compact card on mobile */
+  #onboard-card {
+    padding: 24px 22px 20px;
+    border-radius: 14px;
   }
-  @keyframes eq-mobile-pulse {
-    0%, 100% { box-shadow: 0 0 0 2px var(--red), 0 0 18px rgba(244,63,94,0.35); }
-    50%       { box-shadow: 0 0 0 4px rgba(244,63,94,0.2), 0 0 32px rgba(244,63,94,0.55); }
-  }
+  #onboard-title { font-size: 16px; }
+  .onboard-step-label { font-size: 13px; }
 }
 
 /* ══════════════════════════════════════════
@@ -902,15 +938,51 @@ body {
 
 <!-- ONBOARDING OVERLAY -->
 <div id="onboard-overlay">
-  <div id="onboard-ring"></div>
-  <div id="onboard-tip">
-    <div id="onboard-tip-label">Start here</div>
-    <div id="onboard-tip-text">Type an equation<br>to guide the shark</div>
-    <svg id="onboard-chevron" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M4 6.5 L9 11.5 L14 6.5" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+  <div id="onboard-card">
+    <!-- Shark icon -->
+    <div id="onboard-shark-icon">
+      <svg width="48" height="38" viewBox="0 0 48 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 20 L2 13 L2 27 Z" fill="#FFD700"/>
+        <path d="M9 20 C9 12 15 8 25 8 C36 8 44 13 44 20 C44 27 36 32 25 32 C15 32 9 28 9 20Z" fill="#FFD700"/>
+        <path d="M16 24 C16 21 20 19 26 19 C32 19 38 21 38 24 C38 27 32 29 26 29 C20 29 16 27 16 24Z" fill="#FFF3B0" opacity="0.6"/>
+        <path d="M21 8 L27 8 L25 4 Z" fill="#E6C200"/>
+        <circle cx="35" cy="17" r="5.5" fill="white"/>
+        <circle cx="36" cy="17" r="2.8" fill="#0b1726"/>
+        <circle cx="37.2" cy="15.5" r="1.1" fill="white"/>
+        <rect x="30" y="12" width="10" height="9" rx="3" fill="none" stroke="#0b1726" stroke-width="2"/>
+        <line x1="40" y1="15.5" x2="44" y2="14.5" stroke="#0b1726" stroke-width="2" stroke-linecap="round"/>
+        <path d="M29 25 Q33 29 39 25" fill="none" stroke="#0b1726" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div id="onboard-eyebrow">HOW TO PLAY</div>
+    <h2 id="onboard-title">Key in the equation and make the shark reach the star</h2>
+
+    <div id="onboard-steps">
+      <div class="onboard-step">
+        <div class="onboard-step-num">1</div>
+        <div class="onboard-step-body">
+          <div class="onboard-step-label">Type an equation below</div>
+          <div class="onboard-step-eg">e.g. &nbsp;<code>y = x + 2</code></div>
+        </div>
+      </div>
+      <div class="onboard-step">
+        <div class="onboard-step-num">2</div>
+        <div class="onboard-step-body">
+          <div class="onboard-step-label">The shark follows your curve</div>
+        </div>
+      </div>
+      <div class="onboard-step">
+        <div class="onboard-step-num">3</div>
+        <div class="onboard-step-body">
+          <div class="onboard-step-label">Guide it through every <span class="onboard-star">★</span> to advance</div>
+        </div>
+      </div>
+    </div>
+
+    <button id="onboard-btn">Let's go &rarr;</button>
+    <div id="onboard-skip">Press any key to skip</div>
   </div>
-  <div id="onboard-dismiss">Click the box to start</div>
 </div>
 
 <!-- LEFT PANEL -->
@@ -2839,64 +2911,38 @@ init();
 // ═══════════════════════════════════════
 (function () {
 
-  const overlay  = document.getElementById('onboard-overlay');
-  const ring     = document.getElementById('onboard-ring');
-  const tip      = document.getElementById('onboard-tip');
-  const eqWrap   = document.getElementById('eq-wrap');
-  const eqInput  = document.getElementById('eq-input');
+  const overlay = document.getElementById('onboard-overlay');
+  const btn     = document.getElementById('onboard-btn');
+  const skip    = document.getElementById('onboard-skip');
+  const eqInput = document.getElementById('eq-input');
 
   let dismissed = false;
-
-  const isMobile = () => window.innerWidth <= 900;
-
-  function position() {
-    if (isMobile()) {
-      // On mobile: tip is centred over canvas via CSS; nothing to compute
-      return;
-    }
-    const r   = eqWrap.getBoundingClientRect();
-    const PAD = 6;
-
-    // Red pulsing ring — surrounds eq-wrap
-    ring.style.left   = (r.left   - PAD) + 'px';
-    ring.style.top    = (r.top    - PAD) + 'px';
-    ring.style.width  = (r.width  + PAD * 2) + 'px';
-    ring.style.height = (r.height + PAD * 2) + 'px';
-
-    // Tooltip — centred above the ring with a small gap
-    tip.style.left = (r.left + r.width / 2) + 'px';
-    tip.style.top  = (r.top  - PAD - 88) + 'px';
-  }
 
   function dismiss() {
     if (dismissed) return;
     dismissed = true;
-    // Desktop: fade out overlay
     overlay.classList.remove('visible');
     overlay.classList.add('fading');
-    setTimeout(() => overlay.remove(), 450);
-    // Mobile: remove pulsing glow from eq-wrap
-    eqWrap.classList.remove('onboard-mobile-glow');
+    setTimeout(() => {
+      overlay.remove();
+      // Focus the equation input so the user can start immediately
+      eqInput.focus();
+    }, 400);
   }
 
-  // Wait for layout to settle before positioning and showing
+  // Show overlay after a short layout-settle delay
   setTimeout(() => {
-    if (isMobile()) {
-      // On mobile: pulse the eq-wrap directly instead of overlay
-      eqWrap.classList.add('onboard-mobile-glow');
-    } else {
-      position();
-      requestAnimationFrame(() => overlay.classList.add('visible'));
-    }
-  }, 120);
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+  }, 160);
 
-  // Dismiss on any interaction with the equation box
-  eqWrap.addEventListener('click',   dismiss, { once: true });
-  eqInput.addEventListener('keydown', dismiss, { once: true });
-  eqInput.addEventListener('focus',   dismiss, { once: true });
+  // Dismiss via button, skip text, backdrop click, or any keypress
+  btn.addEventListener('click', dismiss);
+  skip.addEventListener('click', dismiss);
+  overlay.addEventListener('click', e => { if (e.target === overlay) dismiss(); });
+  document.addEventListener('keydown', dismiss, { once: true });
 
-  // Auto-dismiss: 3 s on mobile, 10 s on desktop
-  setTimeout(dismiss, isMobile() ? 3000 : 10000);
+  // Auto-dismiss after 20 s so it never blocks indefinitely
+  setTimeout(dismiss, 20000);
 })();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
