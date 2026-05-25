@@ -1290,6 +1290,7 @@ const LEVELS = [
     desc: 'y = c is a horizontal line — gradient is always zero',
     hint: 'All three hoops sit at y=4. A flat line y=4 passes through all of them!',
     startEq: '2',
+    allowedTypes: ['CONSTANT'],
     stars: [{ x: 3, y: 4 }, { x: 7, y: 4 }, { x: 11, y: 4 }],
     presets: ['2', '3', '4'],
     bonusQ: {
@@ -1304,6 +1305,7 @@ const LEVELS = [
     desc: 'y = x³ ÷ k — a cubic curve that rises faster than a parabola',
     hint: 'Bait at (6, 8). 6³ = 216. What divides 216 to get 8? 216÷27=8. So y = x³÷27.',
     startEq: 'x^3/50',
+    allowedTypes: ['CUBIC'],
     stars: [{ x: 6, y: 8 }],
     presets: ['x^3/50', 'x^3/35', 'x^3/27'],
     bonusQ: {
@@ -1318,6 +1320,7 @@ const LEVELS = [
     desc: 'y = k/x — a hyperbola. As x grows, y shrinks.',
     hint: 'Bait at (3, 4): k÷3=4 → k=12. Try y = 12/x.',
     startEq: '6/x',
+    allowedTypes: ['LINEAR'],   // k/x is classified LINEAR (has x, no ^n)
     stars: [{ x: 3, y: 4 }],
     presets: ['6/x', '9/x', '12/x'],
     startX: 0.5,
@@ -1333,6 +1336,7 @@ const LEVELS = [
     desc: 'y = k/x² drops off faster than 1/x',
     hint: 'Bait at (2, 4): k÷2²=4 → k÷4=4 → k=16. Try y = 16/x².',
     startEq: '8/x^2',
+    allowedTypes: ['QUADRATIC'],
     stars: [{ x: 2, y: 4 }],
     presets: ['8/x^2', '12/x^2', '16/x^2'],
     startX: 0.5,
@@ -1348,6 +1352,7 @@ const LEVELS = [
     desc: 'Mix n=1 and n=2 terms: y = x²/a + x/b',
     hint: 'Bait at (4, 6). Try y = x²/4 + x/2. At x=4: 16/4 + 4/2 = 4+2 = 6. ✓',
     startEq: 'x^2/4',
+    allowedTypes: ['QUADRATIC'],
     stars: [{ x: 4, y: 6 }],
     presets: ['x^2/4', 'x^2/4 + x/4', 'x^2/4 + x/2'],
     bonusQ: {
@@ -1362,6 +1367,7 @@ const LEVELS = [
     desc: 'Combine power terms: y = ax² + bx + c',
     hint: 'Both hoops at y=6. Try −x²/2+5x−2: at x=2: −2+10−2=6 ✓, at x=8: −32+40−2=6 ✓.',
     startEq: '-x^2/2 + 5x - 6',
+    allowedTypes: ['QUADRATIC'],
     stars: [{ x: 2, y: 6 }, { x: 8, y: 6 }],
     presets: ['-x^2/2 + 5x - 6', '-x^2/2 + 5x - 4', '-x^2/2 + 5x - 2'],
     bonusQ: {
@@ -1986,14 +1992,14 @@ function applyEquation(raw, autoLaunch = true) {
     eqStatus.classList.remove('error');
     eqStatus.textContent = '';
 
-    // Check world type restriction
+    // Check type restriction — per-level allowedTypes takes priority over world default
     const worldIdx = getWorldIdx();
-    const allowed  = WORLD_ALLOWED_TYPES[worldIdx];
+    const allowed  = LEVELS[levelIdx].allowedTypes ?? WORLD_ALLOWED_TYPES[worldIdx];
     const eqType   = detectType(raw);
     if (allowed !== null && !allowed.includes(eqType)) {
       showWorldError(
         'WRONG TYPE',
-        `This world wants a ${WORLD_TYPE_NAMES[worldIdx]} equation — you typed a ${eqType.charAt(0) + eqType.slice(1).toLowerCase()} one`
+        `This level wants a ${WORLD_TYPE_NAMES[worldIdx]} equation — you typed a ${eqType.charAt(0) + eqType.slice(1).toLowerCase()} one`
       );
       clearTimeout(launchDelay);
       document.getElementById('err-flash').classList.remove('show');
