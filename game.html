@@ -1653,6 +1653,10 @@ let levelComplete = false;
 // Points scored from correct bonus answers
 let score = 0;
 
+// Track which levels have already been awarded points (prevent replay double-scoring)
+const scoredLevels      = new Set(); // level-completion point
+const bonusScoredLevels = new Set(); // bonus-question point
+
 function updateScoreDisplay() {
   const el = document.getElementById('score-current');
   if (!el) return;
@@ -2193,9 +2197,12 @@ function replayLevel() {
 function showLevelComplete() {
   const isLast = levelIdx + 1 >= LEVELS.length;
 
-  // Award 1 point for solving this level
-  score++;
-  updateScoreDisplay();
+  // Award 1 point for solving this level — only on first completion
+  if (!scoredLevels.has(levelIdx)) {
+    scoredLevels.add(levelIdx);
+    score++;
+    updateScoreDisplay();
+  }
 
   document.getElementById('win-flash').classList.add('show');
   document.getElementById('launch-prompt').classList.add('hide');
@@ -2263,7 +2270,12 @@ function handleBonusAnswer(chosen, bq) {
   `;
   result.classList.add('show');
 
-  if (correct) { score++; updateScoreDisplay(); }
+  // Award 1 point for correct bonus — only on first correct answer for this level
+  if (correct && !bonusScoredLevels.has(levelIdx)) {
+    bonusScoredLevels.add(levelIdx);
+    score++;
+    updateScoreDisplay();
+  }
 
   // Only unlock Next Level if the equation has already been solved.
   // If they answered the bonus early (before solving), the next-btn
