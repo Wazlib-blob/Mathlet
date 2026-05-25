@@ -1558,17 +1558,20 @@ function detectType(rhs) {
   if (/\*\*2(?!\d)|\^2(?!\d)/.test(s))   return 'QUADRATIC';
   if (/sin|cos|tan/.test(s))             return 'TRIG';
   if (/\d\*\*x|\d\^x/.test(s))          return 'EXPONENTIAL';
+  // Factored quadratic: two or more paren groups each containing x
+  // e.g. (x-3)(x-9), -(x-3)(x-9), -0.5(x-1)(x+4), 2(x-2)(x+5)
+  if ((s.match(/\([^)]*x[^)]*\)/g) || []).length >= 2) return 'FACTORED';
   if (/x/.test(s))                       return 'LINEAR';
   return 'CONSTANT';
 }
 
 // null = any type allowed
 const WORLD_ALLOWED_TYPES = [
-  ['LINEAR'],                                    // W1 Linear
-  ['QUADRATIC'],                                // W2 Quadratic
-  ['QUADRATIC', 'CUBIC', 'LINEAR', 'CONSTANT'], // W3 Factored
-  null,                                         // W4 Mixed (any)
-  ['EXPONENTIAL'],                              // W5 Exponential
+  ['LINEAR'],                           // W1 Linear
+  ['QUADRATIC'],                        // W2 Quadratic
+  ['QUADRATIC', 'FACTORED'],            // W3 Factored — no plain linear/constant
+  null,                                 // W4 Mixed (any)
+  ['EXPONENTIAL'],                      // W5 Exponential
 ];
 
 const WORLD_TYPE_NAMES = ['Linear', 'Quadratic', 'Quadratic / Factored', 'Mixed', 'Exponential'];
