@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://mathlet-ten.vercel.app/sitemap.xml
