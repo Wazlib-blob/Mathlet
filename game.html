@@ -2101,11 +2101,10 @@ eqInput.addEventListener('keydown', e => {
 document.getElementById('game').addEventListener('click', function(e) {
   if (!tangentMode || !eqFn) return;
   const rect = this.getBoundingClientRect();
-  const scaleX = this.width  / rect.width;
-  const scaleY = this.height / rect.height;
-  const px = (e.clientX - rect.left) * scaleX;
-  const py = (e.clientY - rect.top)  * scaleY;
-  // Convert canvas pixels → math coords
+  // Use CSS-pixel coords — ML/GW are in logical pixels so no DPR scaling here
+  const px = e.clientX - rect.left;
+  const py = e.clientY - rect.top;
+  // Convert canvas CSS pixels → math coords
   const mx = X_MIN + (px - ML) / GW * (X_MAX - X_MIN);
   if (mx < X_MIN || mx > X_MAX) return;
   tangentX = mx;
