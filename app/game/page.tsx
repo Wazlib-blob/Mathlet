@@ -1014,10 +1014,14 @@ function handleBonusAnswer(chosen: string, bq: BonusQ) {
 
   const result = document.getElementById('bonus-result');
   if (result) {
-    result.innerHTML = `
-      <div class="result-line ${correct ? 'ok' : 'bad'}">${correct ? 'Correct!' : "Not quite — here's why:"}</div>
-      ${bq.explain}
-    `;
+    result.textContent = '';
+    const line = document.createElement('div');
+    line.className = `result-line ${correct ? 'ok' : 'bad'}`;
+    line.textContent = correct ? 'Correct!' : "Not quite — here's why:";
+    const explain = document.createElement('span');
+    explain.textContent = bq.explain;
+    result.appendChild(line);
+    result.appendChild(explain);
     result.classList.add('show');
   }
 
