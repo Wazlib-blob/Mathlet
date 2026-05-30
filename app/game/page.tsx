@@ -96,6 +96,51 @@ const LEVELS: Level[] = [
       explain: 'Set y = 0: 0 = −0.5x + 2 → 0.5x = 2 → x = 4. The line crosses the x-axis at x = 4.',
     },
   },
+  {
+    world: 'WORLD 1-6', title: 'TWO POINTS, ONE LINE',
+    desc: 'Two baits pin down a single line — match BOTH gradient and intercept',
+    hint: 'Gradient = (9 − 1) ÷ (6 − 2) = 2. Then 1 = 2(2) + b → b = −3. Try y = 2x − 3.',
+    startEq: '2x',
+    stars: [{ x: 2, y: 1 }, { x: 6, y: 9 }],
+    presets: ['2x', '2x - 1', '2x - 3'],
+    allowedTypes: ['LINEAR'],
+    bonusQ: {
+      q: 'A line passes through (2, 1) and (6, 9). What is its gradient?',
+      choices: ['1', '2', '3', '4'],
+      answer: '2',
+      explain: 'Gradient = rise ÷ run = (9 − 1) ÷ (6 − 2) = 8 ÷ 4 = 2.',
+    },
+  },
+  {
+    world: 'WORLD 1-7', title: 'FALLING THROUGH BOTH',
+    desc: 'A steeper negative line — only one slope hits both baits',
+    hint: 'Gradient = (−3 − 9) ÷ (8 − 2) = −2. Then 9 = −2(2) + b → b = 13. Try y = −2x + 13.',
+    startEq: '-x + 10',
+    stars: [{ x: 2, y: 9 }, { x: 8, y: -3 }],
+    presets: ['-x + 10', '-2x + 12', '-2x + 13'],
+    allowedTypes: ['LINEAR'],
+    bonusQ: {
+      q: 'Through (2, 9) and (8, −3), what is the gradient?',
+      choices: ['−1', '−2', '−3', '2'],
+      answer: '−2',
+      explain: 'Gradient = (−3 − 9) ÷ (8 − 2) = −12 ÷ 6 = −2. A falling line has a negative gradient.',
+    },
+  },
+  {
+    world: 'WORLD 1-8', title: 'FRACTIONAL GRADIENT',
+    desc: 'The gradient can be a fraction — rise over run still works',
+    hint: 'Gradient = (6 − 2) ÷ (10 − 2) = 0.5. Then 2 = 0.5(2) + b → b = 1. Try y = 0.5x + 1.',
+    startEq: 'x + 3',
+    stars: [{ x: 2, y: 2 }, { x: 10, y: 6 }],
+    presets: ['x + 3', '0.5x + 2', '0.5x + 1'],
+    allowedTypes: ['LINEAR'],
+    bonusQ: {
+      q: 'Through (2, 2) and (10, 6), the gradient is:',
+      choices: ['0.25', '0.5', '1', '2'],
+      answer: '0.5',
+      explain: 'Gradient = (6 − 2) ÷ (10 − 2) = 4 ÷ 8 = 0.5.',
+    },
+  },
 
   // ── WORLD 2: QUADRATIC — VERTEX FORM ──────────────────────
   {
@@ -168,6 +213,21 @@ const LEVELS: Level[] = [
       explain: 'The minimum is at the vertex (6, −4). Subbing x = 6: y = 0 − 4 = −4.',
     },
   },
+  {
+    world: 'WORLD 2-6', title: 'STEEPER PEAK',
+    desc: 'The coefficient a controls how narrow the parabola is',
+    hint: 'Peak at (6, 10). Through (8, 2): 2 = a(8−6)² + 10 → 4a = −8 → a = −2. Try y = −2(x−6)² + 10.',
+    startEq: '-(x-6)^2 + 10',
+    stars: [{ x: 6, y: 10 }, { x: 8, y: 2 }],
+    presets: ['-(x-6)^2 + 10', '-1.5(x-6)^2 + 10', '-2(x-6)^2 + 10'],
+    allowedTypes: ['QUADRATIC'],
+    bonusQ: {
+      q: 'In y = −2(x − 6)² + 10, a larger size of a makes the parabola…',
+      choices: ['Wider', 'Narrower', 'Flatter', 'Shift up'],
+      answer: 'Narrower',
+      explain: 'A larger magnitude of a makes the parabola steeper and narrower; a smaller |a| makes it wider.',
+    },
+  },
 
   // ── WORLD 3: QUADRATIC — FACTORED & STANDARD FORM ─────────
   {
@@ -196,6 +256,21 @@ const LEVELS: Level[] = [
       choices: ['Yes', 'No'],
       answer: 'Yes',
       explain: 'Sub x = 6: y = −36/2 + 36 − 10 = −18 + 36 − 10 = 8. It does!',
+    },
+  },
+  {
+    world: 'WORLD 3-3', title: 'SCALED ROOTS',
+    desc: 'Roots set where it crosses zero; a stretches the curve vertically',
+    hint: 'Roots at x=2 and x=10 (peak at x=6). Through (6, 8): 8 = a(6−2)(6−10) = −16a → a = −0.5. Try y = −0.5(x−2)(x−10).',
+    startEq: '-(x-2)(x-10)',
+    stars: [{ x: 6, y: 8 }, { x: 4, y: 6 }],
+    presets: ['-(x-2)(x-10)', '-0.8(x-2)(x-10)', '-0.5(x-2)(x-10)'],
+    allowedTypes: ['QUADRATIC', 'FACTORED'],
+    bonusQ: {
+      q: 'Where does y = −0.5(x − 2)(x − 10) cross the x-axis?',
+      choices: ['x = 2 and x = 10', 'x = 6 only', 'x = −2 and x = −10', 'x = 0.5'],
+      answer: 'x = 2 and x = 10',
+      explain: 'Set y = 0: (x − 2)(x − 10) = 0 → x = 2 or x = 10. The roots are the x-intercepts.',
     },
   },
 
@@ -493,18 +568,27 @@ const WORLD_ALLOWED_TYPES: (string[] | null)[] = [
 ];
 
 const WORLD_TYPE_NAMES = ['Linear', 'Quadratic', 'Quadratic / Factored', 'Mixed', 'Exponential'];
-const WORLD_STARTS = [0, 5, 10, 12, 18];
+const WORLD_STARTS = [0, 8, 14, 17, 23];
 
 // ═══════════════════════════════════════
 // CANVAS SETUP (module-level mutable state)
 // ═══════════════════════════════════════
-const X_MIN = 0, X_MAX = 14;
+const X_MIN = 0, X_MAX = 14;        // gameplay range (trajectory, launch, stars)
 const Y_MIN = -12, Y_MAX = 12;
 const ML = 52, MB = 36, MT = 16, MR = 16;
 
 let gameCanvas: HTMLCanvasElement | null = null;
 let ctx: CanvasRenderingContext2D | null = null;
 let GW = 0, GH = 0, CW = 0, CH = 0, DPR = 1;
+let PPU = 1;     // pixels-per-unit (identical on both axes — square cells)
+let gridX0 = ML; // left edge of grid in canvas px — updated by resize()
+let gridY0 = MT; // top  edge of grid in canvas px — updated by resize()
+
+// Visible coordinate window. The CONTENT range (X_MIN..Y_MAX above) is the
+// gameplay area; the VISIBLE range is widened on the slack axis in resize()
+// so the square-pixel grid fills the whole canvas instead of leaving a
+// letter-boxed strip. Updated every resize().
+let VX_MIN = X_MIN, VX_MAX = X_MAX, VY_MIN = Y_MIN, VY_MAX = Y_MAX;
 
 function resize() {
   const panel = document.getElementById('right-panel');
@@ -514,13 +598,34 @@ function resize() {
   CH  = panel.clientHeight || 300;
   gameCanvas.width  = Math.round(CW * DPR);
   gameCanvas.height = Math.round(CH * DPR);
-  GW = CW - ML - MR;
-  GH = CH - MT - MB;
+  const availW = CW - ML - MR;
+  const availH = CH - MT - MB;
+
+  // Enforce SQUARE pixels so a gradient of 1 renders at a true 45°. ppu is
+  // identical on both axes; the smaller content fit keeps the whole gameplay
+  // area (X:0–14, Y:-12–12) visible.
+  const xRange = X_MAX - X_MIN;
+  const yRange = Y_MAX - Y_MIN;
+  const ppu = Math.min(availW / xRange, availH / yRange);
+  PPU = ppu;
+
+  // The grid fills the whole canvas; the slack axis shows extra graph paper
+  // (with seaweed on the seabed) rather than leaving empty letter-box margins.
+  GW = availW;
+  GH = availH;
+  gridX0 = ML;
+  gridY0 = MT;
+  // X anchored at 0, extended rightward to fill; Y anchored at the seabed.
+  VX_MIN = X_MIN;  VX_MAX = X_MIN + availW / ppu;
+  VY_MIN = Y_MIN;  VY_MAX = Y_MIN + availH / ppu;
+
+  // Re-grow the seaweed so it covers the full visible seabed width.
+  makeClouds();
 }
 
 function m2c(mx: number, my: number): [number, number] {
-  const cx = ML + (mx - X_MIN) / (X_MAX - X_MIN) * GW;
-  const cy = MT + GH - (my - Y_MIN) / (Y_MAX - Y_MIN) * GH;
+  const cx = gridX0 + (mx - VX_MIN) / (VX_MAX - VX_MIN) * GW;
+  const cy = gridY0 + GH - (my - VY_MIN) / (VY_MAX - VY_MIN) * GH;
   return [cx, cy];
 }
 
@@ -539,7 +644,7 @@ let clouds: Cloud[] = [];
 
 let animRunning  = false;
 let animX        = 0;
-const animSpeed  = 4.0;
+const animSpeed  = 8.0;
 let launchTimer: ReturnType<typeof setTimeout> | null = null;
 let levelComplete = false;
 let score        = 0;
@@ -577,13 +682,21 @@ function initScoreDisplay() {
 }
 
 function makeClouds() {
-  clouds = [
-    { x: 0.6,  y: 0, w: 1.1 }, { x: 1.4,  y: 0, w: 0.8 }, { x: 2.5,  y: 0, w: 1.3 },
-    { x: 3.4,  y: 0, w: 0.9 }, { x: 4.5,  y: 0, w: 1.5 }, { x: 5.3,  y: 0, w: 0.7 },
-    { x: 6.2,  y: 0, w: 1.2 }, { x: 7.1,  y: 0, w: 1.0 }, { x: 8.0,  y: 0, w: 0.85 },
-    { x: 9.0,  y: 0, w: 1.4 }, { x: 10.0, y: 0, w: 0.75 }, { x: 11.0, y: 0, w: 1.1 },
-    { x: 12.0, y: 0, w: 0.95 }, { x: 12.8, y: 0, w: 1.3 },
-  ];
+  // Seaweed clumps span the ENTIRE visible seabed (including any extended
+  // region past x=14), so the floor never looks bare. Positions/widths are
+  // deterministic per index so they stay stable frame-to-frame.
+  clouds = [];
+  const spacing = 0.85;
+  let i = 0;
+  for (let x = VX_MIN + 0.6; x <= VX_MAX; x += spacing) {
+    // stable pseudo-random in [0,1) from the index
+    const r  = Math.abs((Math.sin(i * 12.9898) * 43758.5453) % 1);
+    const r2 = Math.abs((Math.sin(i * 78.233) * 12543.1234) % 1);
+    const w  = 0.7 + r * 0.8;                 // width 0.7 .. 1.5
+    const jx = (r2 - 0.5) * 0.4;              // small horizontal jitter
+    clouds.push({ x: x + jx, y: 0, w });
+    i++;
+  }
 }
 
 function spawnStarBurst(mx: number, my: number) {
@@ -1176,49 +1289,55 @@ function drawGrid() {
   if (!ctx) return;
   ctx.lineWidth = 1;
 
+  // Integer bounds of the visible window (may run negative / beyond the
+  // gameplay area when the canvas is wider/taller than the content).
+  const gx0 = Math.ceil(VX_MIN),  gx1 = Math.floor(VX_MAX);
+  const gy0 = Math.ceil(VY_MIN),  gy1 = Math.floor(VY_MAX);
+
   ctx.strokeStyle = 'rgba(100,220,255,0.08)';
-  for (let x = X_MIN; x <= X_MAX; x++) {
+  for (let x = gx0; x <= gx1; x++) {
     const [cx] = m2c(x, 0);
-    ctx.beginPath(); ctx.moveTo(cx, MT); ctx.lineTo(cx, MT + GH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, gridY0); ctx.lineTo(cx, gridY0 + GH); ctx.stroke();
   }
-  for (let y = Y_MIN; y <= Y_MAX; y++) {
+  for (let y = gy0; y <= gy1; y++) {
     const [, cy] = m2c(0, y);
-    ctx.beginPath(); ctx.moveTo(ML, cy); ctx.lineTo(ML + GW, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(gridX0, cy); ctx.lineTo(gridX0 + GW, cy); ctx.stroke();
   }
 
   ctx.strokeStyle = 'rgba(100,220,255,0.2)';
-  for (let x = X_MIN; x <= X_MAX; x += 2) {
+  for (let x = gx0 + ((gx0 % 2) + 2) % 2; x <= gx1; x += 2) {
     const [cx] = m2c(x, 0);
-    ctx.beginPath(); ctx.moveTo(cx, MT); ctx.lineTo(cx, MT + GH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, gridY0); ctx.lineTo(cx, gridY0 + GH); ctx.stroke();
   }
-  for (let y = Y_MIN; y <= Y_MAX; y += 2) {
+  for (let y = gy0 + ((gy0 % 2) + 2) % 2; y <= gy1; y += 2) {
     const [, cy] = m2c(0, y);
-    ctx.beginPath(); ctx.moveTo(ML, cy); ctx.lineTo(ML + GW, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(gridX0, cy); ctx.lineTo(gridX0 + GW, cy); ctx.stroke();
   }
 
   ctx.strokeStyle = 'rgba(100,220,255,0.5)';
   ctx.lineWidth = 2;
   const [axX] = m2c(0, 0);
-  ctx.beginPath(); ctx.moveTo(axX, MT); ctx.lineTo(axX, MT + GH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(axX, gridY0); ctx.lineTo(axX, gridY0 + GH); ctx.stroke();
   const [, axY] = m2c(0, 0);
   ctx.strokeStyle = 'rgba(150,240,255,0.55)';
   ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(ML, axY); ctx.lineTo(ML + GW, axY); ctx.stroke();
-  if (Y_MIN < 0) {
-    const [, zeroY] = m2c(0, 0);
-    const [, floorY] = m2c(0, Y_MIN);
+  ctx.beginPath(); ctx.moveTo(gridX0, axY); ctx.lineTo(gridX0 + GW, axY); ctx.stroke();
+  if (VY_MIN < 0) {
+    const [, zeroY]  = m2c(0, 0);
+    const [, floorY] = m2c(0, VY_MIN);
     ctx.fillStyle = 'rgba(0,0,0,0.18)';
-    ctx.fillRect(ML, zeroY, GW, floorY - zeroY);
+    ctx.fillRect(gridX0, zeroY, GW, floorY - zeroY);
   }
 
   ctx.font = '700 13px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
-  for (let x = 2; x <= X_MAX; x += 2) {
+  for (let x = gx0 + ((gx0 % 2) + 2) % 2; x <= gx1; x += 2) {
+    if (x === 0) continue;
     const [cx] = m2c(x, 0);
     const lbl = String(x);
     const tw = ctx.measureText(lbl).width;
     const ph = 20;
-    const py = Math.min(Math.max(axY + 4, MT + 2), MT + GH - ph - 2);
+    const py = Math.min(Math.max(axY + 4, gridY0 + 2), gridY0 + GH - ph - 2);
     const px = cx - tw/2 - 7, pw = tw + 14;
     ctx.fillStyle = 'rgba(3,20,42,0.75)';
     ctx.beginPath();
@@ -1231,19 +1350,19 @@ function drawGrid() {
 
   ctx.font = '700 13px "JetBrains Mono", monospace';
   ctx.textAlign = 'right';
-  for (let y = Y_MIN; y <= Y_MAX; y += 2) {
+  for (let y = gy0 + ((gy0 % 2) + 2) % 2; y <= gy1; y += 2) {
     if (y === 0) continue;
     const [, cy] = m2c(0, y);
     const lbl = String(y);
     const tw = ctx.measureText(lbl).width;
-    const px = ML - tw - 16, py = cy - 10, pw = tw + 14, ph = 20;
+    const px = gridX0 - tw - 16, py = cy - 10, pw = tw + 14, ph = 20;
     ctx.fillStyle = y < 0 ? 'rgba(3,10,30,0.80)' : 'rgba(3,20,42,0.72)';
     ctx.beginPath();
     if (ctx.roundRect) ctx.roundRect(px, py, pw, ph, 5);
     else ctx.rect(px, py, pw, ph);
     ctx.fill();
     ctx.fillStyle = y < 0 ? '#93c5fd' : 'rgba(219,234,254,0.88)';
-    ctx.fillText(lbl, ML - 8, cy + 5);
+    ctx.fillText(lbl, gridX0 - 8, cy + 5);
   }
   ctx.textAlign = 'left';
 }
@@ -1335,7 +1454,7 @@ function drawSeaweed() {
   clouds.forEach((s, i) => {
     const [bx, by] = m2c(s.x, Y_MIN);
     const baseH  = GH * (0.16 + s.w * 0.045);
-    const bladeW = Math.max(6, GW * 0.013) * s.w;
+    const bladeW = Math.max(6, PPU * (X_MAX - X_MIN) * 0.013) * s.w;
     const angles = variants[i % variants.length];
 
     ctx!.save();
@@ -1379,8 +1498,9 @@ function drawSeaweed() {
 
 function drawGround() {
   if (!ctx) return;
-  const [x0, y0] = m2c(X_MIN, Y_MIN);
-  const [x1]     = m2c(X_MAX, Y_MIN);
+  // Seabed spans the full visible width, not just the gameplay range.
+  const [x0, y0] = m2c(VX_MIN, Y_MIN);
+  const [x1]     = m2c(VX_MAX, Y_MIN);
   const floorH   = Math.max(16, GH * 0.055);
 
   const sandGrad = ctx.createLinearGradient(0, y0, 0, y0 + floorH);
@@ -1412,9 +1532,11 @@ function drawTrajectory() {
   ctx.beginPath();
   let started = false;
   for (let i = 0; i <= TRAJ_SAMPLE; i++) {
-    const x = X_MIN + (i / TRAJ_SAMPLE) * (X_MAX - X_MIN);
+    // Sample across the full VISIBLE x-axis (not just the 0–14 gameplay range)
+    // so every equation's curve is drawn all the way to the right edge.
+    const x = VX_MIN + (i / TRAJ_SAMPLE) * (VX_MAX - VX_MIN);
     const y = safeEval(eqFn, x);
-    if (y === null || y < Y_MIN) { started = false; continue; }
+    if (y === null || y < VY_MIN || y > VY_MAX) { started = false; continue; }
     const [cx, cy] = m2c(x, y);
     if (!started) { ctx.moveTo(cx, cy); started = true; }
     else ctx.lineTo(cx, cy);
@@ -1425,7 +1547,7 @@ function drawTrajectory() {
 
 function drawTreasure(cx: number, cy: number, ppu: number, collected: boolean, flash: number, sx: number, sy: number) {
   if (!ctx) return;
-  const r = Math.max(14, ppu * 0.32);
+  const r = Math.max(18, ppu * 0.40);
   ctx.save();
   ctx.globalAlpha = collected ? 0.2 : 1.0;
   ctx.translate(cx, cy);
@@ -1508,7 +1630,7 @@ function drawHoops() {
   stars.forEach(s => {
     if (s.flash > 0) s.flash = Math.max(0, s.flash - 0.05);
     const [cx, cy] = m2c(s.x, s.y);
-    const ppu = GW / (X_MAX - X_MIN);
+    const ppu = GW / (VX_MAX - VX_MIN);
     drawTreasure(cx, cy, ppu, s.collected, s.flash, s.x, s.y);
   });
 }
@@ -1529,13 +1651,14 @@ function drawParticles() {
   ctx.globalAlpha = 1;
 }
 
-function drawShark(cx: number, cy: number, wag: number) {
+function drawShark(cx: number, cy: number, wag: number, angle = 0) {
   if (!ctx) return;
-  const r = Math.max(16, GW * 0.034);
+  const r = Math.max(20, PPU * (X_MAX - X_MIN) * 0.042);
   const tailWag = Math.sin(wag * 2.5) * 0.3;
 
   ctx.save();
   ctx.translate(cx, cy);
+  ctx.rotate(angle); // rotate entire shark to follow the curve tangent
 
   ctx.save();
   ctx.rotate(tailWag);
@@ -1622,15 +1745,33 @@ function drawLauncher() {
   const sx0 = LEVELS[levelIdx]?.startX ?? 0;
   const startY = safeEval(eqFn, sx0) ?? 0;
   const [sx, sy] = m2c(sx0, startY);
-  drawShark(sx, sy, 0);
+  // Show the shark already pointing along the curve before launch
+  let launchAngle = 0;
+  const ddx = 0.05;
+  const startY2 = safeEval(eqFn, sx0 + ddx);
+  if (startY2 !== null) {
+    const [sx2, sy2] = m2c(sx0 + ddx, startY2);
+    launchAngle = Math.atan2(sy2 - sy, sx2 - sx);
+  }
+  drawShark(sx, sy, 0, launchAngle);
 }
 
 function drawCharacter() {
   if (!eqFn) return;
-  const rawY  = safeEval(eqFn, animX) ?? 0;
+  const rawY = safeEval(eqFn, animX) ?? 0;
   const [cx, cy] = m2c(animX, rawY);
+  // Compute orientation from the curve's tangent in canvas-pixel space.
+  // Using a delta in math-x and converting both points to canvas coords
+  // automatically accounts for any axis scaling, so the angle is visually exact.
+  let sharkAngle = 0;
+  const ddx = 0.05;
+  const rawY2 = safeEval(eqFn, animX + ddx);
+  if (rawY2 !== null) {
+    const [cx2, cy2] = m2c(animX + ddx, rawY2);
+    sharkAngle = Math.atan2(cy2 - cy, cx2 - cx);
+  }
   spawnTrail(animX, rawY);
-  drawShark(cx, cy, ballAngle);
+  drawShark(cx, cy, ballAngle, sharkAngle);
 }
 
 function render() {
@@ -1657,8 +1798,8 @@ function render() {
 
   drawGrid();
 
-  const [floorX0] = m2c(X_MIN, Y_MIN);
-  const [floorX1, floorY] = m2c(X_MAX, Y_MIN);
+  const [floorX0] = m2c(VX_MIN, Y_MIN);
+  const [floorX1, floorY] = m2c(VX_MAX, Y_MIN);
   const glowH = GH * 0.15;
   const floorGlow = ctx.createLinearGradient(0, floorY - glowH, 0, floorY);
   floorGlow.addColorStop(0, 'rgba(0,0,0,0)');
@@ -1689,9 +1830,11 @@ function gameLoop(ts: number) {
     ballAngle += animSpeed * dt * 2.8;
     checkStarCollections();
 
-    if (animX > X_MAX) {
+    // Let the shark swim all the way to the end of the VISIBLE curve, not just
+    // the gameplay range — so flat lines like y=3 don't stop mid-axis.
+    if (animX > VX_MAX) {
       animRunning = false;
-      animX = X_MAX;
+      animX = VX_MAX;
 
       if (!levelComplete) {
         stars.forEach(s => { s.collected = false; s.flash = 0; });
@@ -1756,7 +1899,7 @@ export default function GamePage() {
       const rect = (this as HTMLCanvasElement).getBoundingClientRect();
       const px = e.clientX - rect.left;
       const py = e.clientY - rect.top;
-      const mx = X_MIN + (px - ML) / GW * (X_MAX - X_MIN);
+      const mx = VX_MIN + (px - gridX0) / GW * (VX_MAX - VX_MIN);
       if (mx < X_MIN || mx > X_MAX) return;
       tangentX = mx;
       const slope = numericalGradient(eqFn, tangentX);
@@ -1882,7 +2025,7 @@ export default function GamePage() {
           <div id="progress-track" style={{flex:1,height:'4px',background:'var(--surface)',borderRadius:'4px',overflow:'hidden'}}>
             <div id="progress-fill" style={{height:'100%',background:'linear-gradient(90deg,var(--gold-dim),var(--gold))',borderRadius:'4px',width:'0%',transition:'width 0.5s ease'}}></div>
           </div>
-          <div id="progress-label" style={{fontFamily:"'Nunito',sans-serif",fontSize:'11px',fontWeight:800,color:'var(--text-dim)',letterSpacing:'0.5px',whiteSpace:'nowrap'}}>1 / 21</div>
+          <div id="progress-label" style={{fontFamily:"'Nunito',sans-serif",fontSize:'13px',fontWeight:800,color:'var(--text-dim)',letterSpacing:'0.5px',whiteSpace:'nowrap'}}>1 / 21</div>
         </div>
 
         <div id="eq-wrap">
@@ -1899,11 +2042,11 @@ export default function GamePage() {
         <div id="eq-status"></div>
 
         <div id="world-tabs">
-          <div className="world-tab active" onClick={() => jumpToWorld(0)}>W1<br /><span style={{fontSize:'9px',fontWeight:600,opacity:0.7}}>Linear</span></div>
-          <div className="world-tab" onClick={() => jumpToWorld(1)}>W2<br /><span style={{fontSize:'9px',fontWeight:600,opacity:0.7}}>Quadratic</span></div>
-          <div className="world-tab" onClick={() => jumpToWorld(2)}>W3<br /><span style={{fontSize:'9px',fontWeight:600,opacity:0.7}}>Factored</span></div>
-          <div className="world-tab" onClick={() => jumpToWorld(3)}>W4<br /><span style={{fontSize:'9px',fontWeight:600,opacity:0.7}}>Mixed</span></div>
-          <div className="world-tab" onClick={() => jumpToWorld(4)}>W5<br /><span style={{fontSize:'9px',fontWeight:600,opacity:0.7}}>Exp</span></div>
+          <div className="world-tab active" onClick={() => jumpToWorld(0)}>W1<br /><span style={{fontSize:'11px',fontWeight:600,opacity:0.7}}>Linear</span></div>
+          <div className="world-tab" onClick={() => jumpToWorld(1)}>W2<br /><span style={{fontSize:'11px',fontWeight:600,opacity:0.7}}>Quadratic</span></div>
+          <div className="world-tab" onClick={() => jumpToWorld(2)}>W3<br /><span style={{fontSize:'11px',fontWeight:600,opacity:0.7}}>Factored</span></div>
+          <div className="world-tab" onClick={() => jumpToWorld(3)}>W4<br /><span style={{fontSize:'11px',fontWeight:600,opacity:0.7}}>Mixed</span></div>
+          <div className="world-tab" onClick={() => jumpToWorld(4)}>W5<br /><span style={{fontSize:'11px',fontWeight:600,opacity:0.7}}>Exp</span></div>
         </div>
 
         <div id="level-title"  style={{display:'none'}}></div>

@@ -42,8 +42,8 @@ body {
 
 /* ── LEFT PANEL ── */
 #left-panel {
-  width: 326px;
-  min-width: 326px;
+  width: 520px;
+  min-width: 520px;
   background: var(--panel);
   border-right: 1px solid var(--border);
   display: flex;
@@ -51,7 +51,7 @@ body {
   padding: 16px 14px 14px;
   position: relative;
   overflow-y: auto;
-  gap: 7px;
+  gap: 11px;
 }
 
 /* Grain texture overlay */
@@ -80,7 +80,7 @@ body {
 /* ── HEADER ── */
 .panel-title {
   font-family: 'Nunito', sans-serif;
-  font-size: 20px; font-weight: 900;
+  font-size: 24px; font-weight: 900;
   letter-spacing: -0.2px; color: var(--gold);
   text-shadow: 0 0 20px #FFD70045;
   display: flex; align-items: center; gap: 7px;
@@ -114,7 +114,7 @@ body {
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: var(--radius);
-  min-height: 66px;
+  min-height: 74px;
   transition: border-color 0.2s, box-shadow 0.2s;
   cursor: text;
 }
@@ -132,11 +132,11 @@ body {
   width: 100%; height: 100%;
   opacity: 0; cursor: text;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 22px; font-weight: 600;
+  font-size: 26px; font-weight: 600;
   color: var(--text);
   background: transparent; border: none; outline: none; resize: none;
   /* push text past the "y = " prefix so it aligns with render-body */
-  padding: 14px 16px 14px 68px;
+  padding: 16px 18px 16px 76px;
   line-height: 1.4;
   caret-color: var(--gold);
 }
@@ -145,11 +145,11 @@ body {
 #eq-wrap.focused #eq-render-body { visibility: hidden; }
 
 #eq-render {
-  padding: 14px 16px;
+  padding: 16px 18px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 22px; font-weight: 600;
+  font-size: 26px; font-weight: 600;
   color: var(--text);
-  min-height: 66px; line-height: 1.4;
+  min-height: 74px; line-height: 1.4;
   display: flex; align-items: center; gap: 6px;
   pointer-events: none; position: relative; z-index: 1;
 }
@@ -196,9 +196,9 @@ body {
 .sup-btn {
   background: var(--surface);
   border: 1.5px solid var(--border);
-  border-radius: 7px; padding: 6px 12px;
+  border-radius: 7px; padding: 8px 15px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px; font-weight: 600;
+  font-size: 15px; font-weight: 600;
   color: var(--text-dim); cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.08s;
   white-space: nowrap; user-select: none;
@@ -222,9 +222,9 @@ body {
   flex: 1; min-width: 0;
   background: transparent;
   border: none;
-  border-radius: 7px; padding: 7px 2px;
+  border-radius: 7px; padding: 9px 2px;
   font-family: 'Nunito', sans-serif;
-  font-size: 11px; font-weight: 800;
+  font-size: 13px; font-weight: 800;
   color: var(--text-dim); cursor: pointer;
   text-align: center;
   transition: background 0.18s ease, color 0.18s ease;
@@ -269,10 +269,13 @@ body {
   display: flex; flex-direction: column; gap: 6px;
   padding: 4px 0;
   align-items: center;
+  /* anchor the score to the bottom so the panel never leaves dead space below
+     it; collapses harmlessly to 0 on short windows where content scrolls */
+  margin-top: auto;
 }
 #score-eyebrow {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; font-weight: 700;
+  font-size: 11px; font-weight: 700;
   letter-spacing: 3px; text-transform: uppercase;
   color: var(--text-dim);
 }
@@ -290,7 +293,7 @@ body {
 #score-current.bump { transform: scale(1.18); }
 #score-denom {
   font-family: 'Nunito', sans-serif;
-  font-size: 18px; font-weight: 700;
+  font-size: 22px; font-weight: 700;
   color: var(--text-dim);
   margin-left: 4px;
 }
@@ -558,18 +561,18 @@ body {
 }
 .bonus-label {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; font-weight: 700;
+  font-size: 11px; font-weight: 700;
   letter-spacing: 2.5px; text-transform: uppercase;
   color: var(--gold);
 }
 .bonus-pts {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
   color: #4ade80; letter-spacing: 1px;
 }
 #bonus-q {
   font-family: 'Nunito Sans', sans-serif;
-  font-size: 13px; font-weight: 700;
+  font-size: 16px; font-weight: 700;
   color: var(--text); line-height: 1.5;
   margin-bottom: 12px;
 }
@@ -579,11 +582,11 @@ body {
 }
 .bonus-choice {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px; font-weight: 700;
+  font-size: 15px; font-weight: 700;
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 8px;
-  padding: 9px 6px;
+  padding: 12px 8px;
   color: var(--text);
   cursor: pointer; text-align: center;
   transition: background 0.15s, border-color 0.15s, transform 0.1s;
@@ -604,13 +607,13 @@ body {
 .bonus-choice.answered { cursor: default; }
 #bonus-result {
   font-family: 'Nunito Sans', sans-serif;
-  font-size: 12px; font-weight: 600;
+  font-size: 14px; font-weight: 600;
   color: var(--text-dim); line-height: 1.55;
   margin-top: 10px; display: none;
 }
 #bonus-result.show { display: block; }
 #bonus-result .result-line {
-  font-weight: 800; font-size: 13px;
+  font-weight: 800; font-size: 15px;
   margin-bottom: 4px;
 }
 #bonus-result .result-line.ok  { color: #4ade80; }
